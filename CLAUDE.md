@@ -191,4 +191,7 @@ connected unless it was actually done and verified.
   prefixed with `html` to win on specificity.
 - **Site repository URL.** `site.repositoryUrl` points at https://github.com/IHANsaja/kitloom.
   Setting it to `null` hides every repository link; the Publish page and footer adapt.
-- **Licence.** Starter kits are MIT. The site's own source has no licence chosen yet.
+- **Licence.** The site's source, design, and branding are proprietary (`LICENSE`, all rights
+  reserved; viewing and forking to contribute is allowed). Starter kits in `packages/` stay
+  MIT under their own `LICENSE` files. Listed setups keep their creators' licences. Do not
+  add a dependency whose licence forbids use in a closed-source commercial product.

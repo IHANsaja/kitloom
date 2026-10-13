@@ -2,6 +2,13 @@
 
 There are two ways to contribute: list a setup, or improve the site.
 
+## Licence terms for contributions
+
+Kitloom's own code is proprietary (see `LICENSE`). By opening a pull request you keep
+ownership of what you submit and grant Kitloom the right to use it as part of the site,
+as set out in section 5 of `LICENSE`. A setup you list stays under the licence you chose
+for it.
+
 ## List a setup
 
 You host the package; Kitloom lists it. Nothing is uploaded to this repository.

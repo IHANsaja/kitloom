@@ -50,5 +50,11 @@ npm run dev
 
 ## Licence
 
-The starter kits in `packages/` each carry an MIT `LICENSE`. No licence has been chosen for
-the site's own source code yet; add one before accepting outside contributions.
+Kitloom's own source code, design, and branding are proprietary: see `LICENSE`. You may
+read the code and fork it to propose changes, but not reuse it or run it as your own
+product without permission.
+
+Two things are licensed separately:
+
+- The starter kits in `packages/` each carry their own MIT `LICENSE`.
+- Setups listed in the catalog belong to their creators, under the licence each one states.

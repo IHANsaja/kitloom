@@ -1,0 +1,61 @@
+Kitloom Proprietary Licence
+
+Copyright (c) 2026 Ihan Hansaja. All rights reserved.
+
+1. Scope
+
+This licence covers the Kitloom website and platform source code, design system,
+documentation, branding, and all other material in this repository ("the Software"),
+except for the material listed in section 4.
+
+2. What you may do
+
+You may view the Software and fork this repository on GitHub for the sole purpose of
+proposing changes to it (for example, a pull request that adds or updates a catalog
+entry or fixes a defect).
+
+3. What you may not do
+
+Without prior written permission from the copyright holder, you may not:
+
+  a. use the Software, or any part of it, to operate a product or service, whether
+     commercial or not;
+  b. copy, modify, merge, publish, distribute, sublicense, or sell the Software or any
+     work derived from it, other than as allowed in section 2;
+  c. remove or alter any copyright, licence, or attribution notice;
+  d. use the names "Kitloom" or "kitloom.site", the Kitloom logo, or the Kitloom visual
+     identity in a way that suggests endorsement or affiliation.
+
+4. Material under other terms
+
+  a. Starter kits. Each directory under packages/ is licensed separately under the
+     LICENSE file it contains (MIT at the time of writing). Those terms, not this
+     licence, govern those files and the ZIP archives built from them.
+  b. Listed setups. Setups listed in the catalog belong to their creators and are
+     governed by the licence each creator states. Kitloom claims no ownership of them.
+     Catalog metadata describing a setup (name, description, README text) is supplied by
+     its creator and reproduced with their permission for the purpose of listing it.
+  c. Third-party software. Dependencies remain under their own licences.
+
+5. Contributions
+
+By submitting a contribution to this repository you confirm that you have the right to
+submit it, and you grant the copyright holder a perpetual, worldwide, non-exclusive,
+royalty-free, irrevocable licence to use, modify, publish, distribute, and sublicense
+that contribution as part of the Software, including in commercial offerings. You keep
+ownership of your contribution and of any setup you list.
+
+6. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+7. Termination
+
+Any use outside what this licence allows ends your rights under it automatically.
+
+For permission requests, open an issue at https://github.com/IHANsaja/kitloom.
