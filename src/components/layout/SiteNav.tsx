@@ -9,6 +9,7 @@ import gsap from "gsap";
 import { Icon } from "@/components/ui/Icon";
 import { MOTION_OK } from "@/components/ui/Reveal";
 import { buttonClass, cx } from "@/components/ui/styles";
+import { useSession } from "@/lib/supabase/auth";
 
 const LINKS = [
   { href: "/explore", label: "Explore", match: (path: string) => path.startsWith("/explore") || path.startsWith("/setups") },
@@ -18,6 +19,7 @@ const LINKS = [
 
 export function SiteNav() {
   const pathname = usePathname();
+  const session = useSession();
   const [open, setOpen] = useState(false);
   const [lastPath, setLastPath] = useState(pathname);
   const panel = useRef<HTMLDivElement>(null);
@@ -57,6 +59,10 @@ export function SiteNav() {
   );
 
   const publishCurrent = pathname.startsWith("/publish");
+  const account =
+    session !== "loading" && session !== null
+      ? { href: "/account", label: "Account", current: pathname.startsWith("/account") }
+      : { href: "/signin", label: "Sign in", current: pathname.startsWith("/signin") };
 
   return (
     <>
@@ -80,6 +86,18 @@ export function SiteNav() {
       </nav>
 
       <div className="ml-auto flex items-center gap-2">
+        {/* Reserved width while the session loads, so the header never shifts. */}
+        <span className="hidden min-w-[4.5rem] justify-end md:flex">
+          {session === "loading" ? null : (
+            <Link
+              href={account.href}
+              aria-current={account.current ? "page" : undefined}
+              className={cx("px-2 text-sm transition-colors duration-150 ease-kit hover:text-fg", account.current ? "text-fg" : "text-fg-2")}
+            >
+              {account.label}
+            </Link>
+          )}
+        </span>
         <Link
           href="/publish"
           aria-current={publishCurrent ? "page" : undefined}
@@ -126,6 +144,21 @@ export function SiteNav() {
               </Link>
             );
           })}
+          {session === "loading" ? null : (
+            <Link
+              href={account.href}
+              data-menu-item
+              aria-current={account.current ? "page" : undefined}
+              onClick={() => setOpen(false)}
+              className={cx(
+                "cell-x flex h-12 items-center justify-between border-t border-line-subtle text-[0.9375rem]",
+                account.current ? "border-l-2 border-l-lime text-fg" : "text-fg-2",
+              )}
+            >
+              {account.label}
+              <Icon name="arrow-right" size={16} className="text-fg-3" />
+            </Link>
+          )}
         </nav>
       </div>
     </>

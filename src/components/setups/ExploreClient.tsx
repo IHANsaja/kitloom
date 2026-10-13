@@ -12,6 +12,7 @@ import { SearchInput } from "@/components/search/SearchInput";
 import { SetupGrid } from "@/components/setups/SetupCell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
+import { Notice } from "@/components/ui/Notice";
 import { MOTION_OK } from "@/components/ui/Reveal";
 import { buttonClass, cx } from "@/components/ui/styles";
 import {
@@ -26,6 +27,7 @@ import {
   type SetupQuery,
 } from "@/lib/catalog/query";
 import { AGENT_FILTERS, CATEGORIES } from "@/lib/catalog/taxonomy";
+import { useAllSetups } from "@/lib/community/useAllSetups";
 import { pluralize } from "@/lib/format";
 import type { SetupSummary } from "@/types/catalog";
 
@@ -35,7 +37,9 @@ const ANIMATED_CELLS = 12;
  * Search, filters, and sorting over the catalog, entirely in the browser (the site is a
  * static export). State is mirrored into the URL so every view can be shared or bookmarked.
  */
-export function ExploreClient({ setups }: { setups: readonly SetupSummary[] }) {
+export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSummary[] }) {
+  // Starter kits are pre-rendered; community setups join the list when the database answers.
+  const { setups, community } = useAllSetups(builtIn);
   const pathname = usePathname();
   const params = useSearchParams();
   const urlKey = new URLSearchParams(params.toString()).toString();
@@ -181,7 +185,15 @@ export function ExploreClient({ setups }: { setups: readonly SetupSummary[] }) {
           <SortSelect value={sort} options={sorts} onChange={(next) => update({ sort: next })} />
         </div>
 
-        <div ref={results}>
+        {community === "error" ? (
+          <div className="cell-x border-b border-line py-3 lg:px-6">
+            <Notice tone="warning" label="Community setups unavailable">
+              The database did not respond, so only Kitloom&apos;s starter kits are listed. Reload to try again.
+            </Notice>
+          </div>
+        ) : null}
+
+        <div ref={results} aria-busy={community === "loading"}>
           {matches.length > 0 ? (
             <SetupGrid setups={matches} layout="beside-sidebar" />
           ) : setups.length === 0 ? (

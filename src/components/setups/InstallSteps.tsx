@@ -21,7 +21,8 @@ export function InstallSteps({ setup, access }: InstallStepsProps) {
     );
   }
 
-  const { fileName } = access;
+  // GitHub names a HEAD archive at download time, so fall back to a visible placeholder.
+  const fileName = access.fileName ?? "<downloaded-file>.zip";
   const sha = setup.package.sha256;
   const steps: { title: string; body: string; blocks?: { label: string; code: string }[] }[] = [];
 
@@ -50,7 +51,9 @@ export function InstallSteps({ setup, access }: InstallStepsProps) {
       body:
         setup.origin === "first-party"
           ? `Extract outside your project first. The archive unpacks into a single ${setup.slug}/ folder.`
-          : "Extract outside your project first, into an empty folder, so nothing is overwritten by accident.",
+          : access.source === "github-archive"
+            ? "Extract outside your project first. A GitHub archive unpacks into a single folder named after the repository and branch, and contains the whole repository, not only the setup files."
+            : "Extract outside your project first, into an empty folder, so nothing is overwritten by accident.",
       blocks: [
         { label: "macOS / Linux", code: `unzip ${fileName} -d kitloom-inbox` },
         { label: "Windows PowerShell", code: `Expand-Archive ${fileName} -DestinationPath kitloom-inbox` },

@@ -41,7 +41,7 @@ export interface ManifestEntry {
 
 /**
  * - "first-party": a starter kit maintained in this repository under packages/.
- * - "community": a package hosted by its creator and listed here by pull request.
+ * - "community": published by a signed-in user; stored in the database, hosted on GitHub.
  */
 export type SetupOrigin = "first-party" | "community";
 
@@ -60,6 +60,11 @@ export interface Setup {
   license: License;
   package: PackageMetadata;
   repositoryUrl: string | null;
+  /**
+   * Credits: other public GitHub repositories the creator says this setup draws on.
+   * Canonical https://github.com/<owner>/<repo> links. Stated by the creator, not verified.
+   */
+  sourceRepositories: string[];
   /** Untrusted Markdown. Must only be rendered through ReadmePreview. */
   readme: string | null;
   manifest: ManifestEntry[];

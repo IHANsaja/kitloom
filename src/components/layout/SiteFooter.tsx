@@ -23,8 +23,9 @@ export function SiteFooter() {
               <span className="font-semibold tracking-[-0.03em]">kitloom</span>
             </p>
             <p className="mt-3 text-sm leading-relaxed text-fg-2">
-              A free directory of AI coding-agent setups. No accounts, no tracking, no database.
-              Setups belong to their creators and are shared under the licence each one states.
+              A free directory of AI coding-agent setups. No account needed to browse or download,
+              and no tracking. Setups belong to their creators and are shared under the licence
+              each one states.
             </p>
           </div>
           <nav aria-label="Footer">

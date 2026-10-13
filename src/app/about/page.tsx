@@ -26,9 +26,9 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
           shows what each one contains, and links to the ZIP.
         </p>
         <p>
-          It is free, has no accounts, sets no cookies, and runs no analytics. The whole site is
-          static files built from one JSON catalog. It is not a chatbot, it does not run agents,
-          and it does not install anything for you.
+          It is free. Browsing and downloading need no account, and the site runs no analytics
+          or advertising. You only sign in to publish your own setups. It is not a chatbot, it
+          does not run agents, and it does not install anything for you.
         </p>
       </>
     ),
@@ -91,9 +91,10 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
           <li>Being hosted on GitHub, or listed here, does not make a package trusted.</li>
         </ul>
         <p>
-          Kitloom never executes package contents and does not run automated scanning. Listings
-          are reviewed by a person when they are submitted. READMEs are displayed as plain
-          Markdown with HTML removed and remote images blocked.
+          Kitloom never executes package contents and does not run automated scanning.
+          Community listings appear as soon as their creator publishes them; they are not
+          reviewed first. Maintainers can hide a listing after the fact. READMEs are displayed
+          as plain Markdown with HTML removed and remote images blocked.
         </p>
       </>
     ),
@@ -121,14 +122,14 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
     body: (
       <>
         <p>
-          Host your ZIP as a release asset in your own GitHub repository, then add one record to
-          the catalog by pull request. The build validates the record and a maintainer reviews
-          the package. There is no upload form, because a static site cannot hold publishing
-          credentials safely.
+          Keep your setup in a public GitHub repository, sign in, and fill in a short form: the
+          repository link, a description, and the agents it is written for. Kitloom reads the
+          README and file list from GitHub and links to the ZIP that GitHub builds from the
+          repository. Nothing is uploaded to Kitloom.
         </p>
         <p>
           <Link href="/publish" className={buttonClass("secondary", "md", "no-underline")}>
-            Read the publishing steps
+            Publish a setup
           </Link>
         </p>
       </>
@@ -140,14 +141,16 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
     body: (
       <>
         <p>
-          The catalog is a file in version control, so every change to a listing is a reviewed
-          commit. To update a setup, publish a new release and open a pull request that changes
-          the version, download URL, size, checksum, manifest, and updated date.
+          A community listing always downloads the current state of its repository, so pushing
+          to GitHub updates what people get. To refresh the README and file list shown on
+          Kitloom, or to change the description, edit the listing from your account. You can
+          delete a listing at any time.
         </p>
         <p>
-          Kitloom links to one version per setup. Older releases stay available in the
-          creator&apos;s repository. Kitloom does not show download counts, because a static site has
-          no trustworthy way to count them.
+          Because that ZIP follows the repository, it has no fixed checksum; the repository&apos;s
+          commit history is the record of what changed. Kitloom&apos;s own starter kits are built
+          with the site and do carry a checksum. Kitloom does not show download counts, because
+          it has no trustworthy way to count them.
         </p>
       </>
     ),

@@ -9,6 +9,7 @@
 import rawCatalog from "@/data/setups.json";
 import { parseCatalog } from "@/lib/catalog/schema";
 import { searchSetups, sortSetups, type SetupQuery } from "@/lib/catalog/query";
+import { toSummary } from "@/lib/catalog/summary";
 import type { Catalog, Setup, SetupSummary } from "@/types/catalog";
 
 // Validated once per build. An invalid catalog throws a CatalogValidationError listing
@@ -16,25 +17,7 @@ import type { Catalog, Setup, SetupSummary } from "@/types/catalog";
 const catalog: Catalog = parseCatalog(rawCatalog);
 const setupsBySlug = new Map(catalog.setups.map((setup) => [setup.slug, setup]));
 
-export function toSummary(setup: Setup): SetupSummary {
-  return {
-    slug: setup.slug,
-    name: setup.name,
-    description: setup.description,
-    origin: setup.origin,
-    creatorName: setup.creator.name,
-    agents: setup.agents.map((agent) => agent.id),
-    categories: setup.categories,
-    tags: setup.tags,
-    version: setup.version,
-    license: setup.license,
-    format: setup.package.format,
-    publishedAt: setup.publishedAt,
-    updatedAt: setup.updatedAt,
-    downloads: setup.downloads,
-    featured: setup.featured,
-  };
-}
+export { toSummary };
 
 export function getCatalog(): Catalog {
   return catalog;

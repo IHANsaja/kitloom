@@ -1,8 +1,9 @@
 # Kitloom — design specification
 
 The visual and interaction contract for every route. `CLAUDE.md` governs engineering; this
-file governs what the product looks and feels like. Both describe the same product: a free,
-database-free, static directory of AI coding-agent setups.
+file governs what the product looks and feels like. Both describe the same product: a free
+directory of AI coding-agent setups, served as a static site, with accounts only for the
+people who publish.
 
 ## 1. Direction
 
@@ -151,7 +152,29 @@ Controls share heights so rows align: 32px (compact: filter rows, copy buttons),
 mark + lowercase wordmark `kitloom`. Centre/left: Explore, Agents, About. Right: Publish as
 the only bordered action. Current route shown by `fg` text plus a 2px lime underline and
 `aria-current="page"`. Below 768px the links collapse into a disclosure menu opened by a
-labelled button; the menu is a full-width ruled list. No login, no avatar.
+labelled button; the menu is a full-width ruled list. Beside Publish sits one quiet text
+link: "Sign in" when signed out, "Account" when signed in. Its slot has a reserved width
+and stays empty while the session loads, so the header never shifts. No avatar, no
+dropdown, no user name in the header.
+
+**Form field.** Label above (14px, weight 500), control, then hint (12px `fg-2`), then error
+(12px `danger` with an alert icon, `role="alert"`). Controls: `surface` fill, `line-control`
+border, 2px radius, 44px tall; focus turns the border lime; `aria-invalid` turns it
+`danger`. Optional fields say "optional" in mono at the right of the label — required is
+the default and is not marked with an asterisk. Technical values (URLs, slugs, versions,
+tags, licence ids) are set in mono. Errors appear on submit, name the fix, and are tied to
+their field with `aria-describedby`; a form-level line states that nothing was saved.
+
+**Choice grid.** Multi-select options (agents, categories) are native checkboxes laid out
+as cells in a ruled grid: selected cells take `surface-2` and `fg`, the checkbox itself is
+lime (`accent-color`). Never custom-drawn toggles, never pills.
+
+**Inline status line.** Result of a background check (e.g. "Repository found · 12 files ·
+README found · MIT"): a `surface` strip with a 2px left rule — lime for success, `danger`
+for failure — mono 12px, announced with `aria-live="polite"`.
+
+**Destructive action.** Two steps in place, never a modal: "Delete" swaps to
+"Delete permanently" (`danger` border and text) plus "Keep". Confirmed by toast afterwards.
 
 **Wordmark.** A 3×3 over-under weave drawn with strokes: neutral threads with a single lime
 weft. Always paired with the text wordmark.
@@ -237,9 +260,31 @@ the live count and the sort control. State lives in the URL (`q`, `agent`, `cate
 then 8/4: main column (README, file manifest, install steps, release notes) and a sticky
 aside (download panel, checksum, metadata rows, source link, safety notice).
 
-**Publish `/publish`** — numbered steps as a ruled ordered list; requirements; a copyable
-catalog-entry template; the contribution repository link, or an explicit "not configured
-yet" notice when the repository URL is unset. No upload form.
+**Community setup `/setup?slug=`** — the same composition as the setup detail page, rendered
+in the browser. While loading it shows one mono status line, not a skeleton. The owner sees
+a `surface` band above the header with "Your setup", its visibility, and Edit.
+
+**Built from (credits).** When a creator lists other repositories their setup draws on, the
+detail aside shows a "Built from" block between the metadata rows and the safety notice:
+`owner/repo` links in mono with an external arrow, one per line, and a one-sentence caption
+saying they are the creator's own credits, unchecked, and not part of the download. The
+block is absent when there are none. Never styled as badges or logos.
+
+**Publish `/publish`** — 8/4. Main: the publish form (repository link with a "Read from
+GitHub" action and its status line, name, URL name, description, agents, categories, tags,
+version, licence, and an optional "Built from" list of credited repositories, one per line). Signed out, the same cell holds a single panel explaining why sign-in is
+needed, with one primary action. Aside: a numbered "Before you publish" checklist and a
+note on why there is a link instead of an upload. There is no file-upload control.
+
+**Sign in `/signin`** — 7/5. Left: one sentence on why, and three plain statements about
+what is stored. Right: only the sign-in methods that are actually enabled — provider buttons
+(GitHub is the primary one when present), an "or" rule, and an email field that sends a
+one-time link. After sending, the panel is replaced by "Check your inbox". No password
+field exists anywhere.
+
+**Account `/account`** — header cell with the display name, the signed-in email (shown only
+to its owner), Publish and Sign out; then a ruled list of the user's setups with Edit and
+the two-step Delete. A hidden listing is labelled in `warning` text.
 
 **About `/about`** — single reading column with a ruled section index.
 
@@ -312,5 +357,6 @@ No hype words, no exclamation marks, no emoji.
 Glow gradients; purple/blue "AI" gradients; glassmorphism and backdrop blur; drop shadows;
 large rounded cards; decorative blobs or orbs; fake terminal windows as decoration; emoji as
 identity; pill-badge clusters; stock photos and illustrations; fake statistics, testimonials,
-user counts or download counts; login or profile UI that does nothing; any control that does
+user counts or download counts; login or profile UI that does nothing; sign-in buttons for providers that are not enabled;
+password fields; upload controls; any control that does
 not do what its label says; `href="#"`.

@@ -16,6 +16,15 @@ const buttonSizes = {
   lg: "h-11 px-5 text-sm",
 } as const;
 
+/** Text inputs, selects and textareas share one look. See design.md §5 "Form field". */
+export function inputClass(className?: string): string {
+  return cx(
+    "block w-full rounded-xs border border-line-control bg-surface px-3 py-2.5 text-[0.9375rem] text-fg placeholder:text-fg-2",
+    "focus-visible:border-lime focus-visible:outline-offset-0 aria-[invalid=true]:border-danger read-only:text-fg-2",
+    className,
+  );
+}
+
 /** Class recipe shared by <button> and <a> so actions and links look identical. */
 export function buttonClass(
   variant: keyof typeof buttonVariants = "secondary",

@@ -4,7 +4,8 @@
 import { z } from "zod";
 
 import { AGENT_IDS, CATEGORY_IDS } from "@/lib/catalog/taxonomy";
-import { isAllowedDownloadUrl, isSafeHttpsUrl } from "@/lib/packages/urls";
+import { isSafeManifestPath } from "@/lib/packages/paths";
+import { isAllowedDownloadUrl, isGitHubRepoUrl, isSafeHttpsUrl, MAX_SOURCE_REPOSITORIES } from "@/lib/packages/urls";
 import type { Catalog, Setup } from "@/types/catalog";
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -18,13 +19,7 @@ function isIsoDate(value: string): boolean {
   return ISO_DATE.test(value) && !Number.isNaN(Date.parse(value));
 }
 
-/** Manifest paths are relative, POSIX-style, and may never escape the package root. */
-export function isSafeManifestPath(value: string): boolean {
-  if (value.length === 0 || value.length > 260) return false;
-  if (value.startsWith("/") || value.includes("\\") || /^[A-Za-z]:/.test(value)) return false;
-  if (/[\u0000-\u001f]/.test(value)) return false;
-  return value.split("/").every((segment) => segment !== "" && segment !== "." && segment !== "..");
-}
+export { isSafeManifestPath };
 
 const httpsUrl = z.string().refine(isSafeHttpsUrl, "must be an https:// URL without credentials");
 const isoDate = z.string().refine(isIsoDate, "must be an ISO-8601 UTC date-time");
@@ -60,13 +55,16 @@ const setupSchema = z
         .string()
         .refine(
           isAllowedDownloadUrl,
-          "must be /packages/<file>.zip or an https://github.com/<owner>/<repo>/releases/download/<tag>/<file>.zip URL",
+          "must be /packages/<file>.zip, a GitHub release asset URL, or a GitHub repository archive URL",
         )
         .nullable(),
       sizeBytes: z.number().int().positive().nullable(),
       sha256: z.string().regex(SHA256, "must be 64 lowercase hex characters").nullable(),
     }),
     repositoryUrl: httpsUrl.nullable(),
+    sourceRepositories: z
+      .array(z.string().refine(isGitHubRepoUrl, "must be https://github.com/<owner>/<repo>"))
+      .max(MAX_SOURCE_REPOSITORIES),
     readme: z.string().max(40_000).nullable(),
     manifest: z
       .array(
@@ -91,6 +89,7 @@ const setupSchema = z
       ["categories", setup.categories],
       ["tags", setup.tags],
       ["manifest", setup.manifest.map((entry) => entry.path)],
+      ["sourceRepositories", setup.sourceRepositories],
     ] as const) {
       const repeated = duplicates([...values]);
       if (repeated.length > 0) {
@@ -112,7 +111,7 @@ const setupSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["package", "downloadUrl"],
-        message: "community packages must be hosted as a GitHub release asset",
+        message: "community packages must be hosted on GitHub",
       });
     }
   }) satisfies z.ZodType<Setup>;

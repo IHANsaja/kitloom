@@ -38,6 +38,7 @@ const validRecord = {
   license: null,
   package: { format: "zip", downloadUrl: null, sizeBytes: null, sha256: null },
   repositoryUrl: null,
+  sourceRepositories: [],
   readme: null,
   manifest: [],
   publishedAt: "2026-01-01T00:00:00.000Z",
@@ -143,6 +144,8 @@ describe("catalog validation", () => {
     ["javascript creator url", { creator: { name: "X", url: "javascript:alert(1)" } }],
     ["invented download count field type", { downloads: "lots" }],
     ["unknown extra field", { price: 5 }],
+    ["non-GitHub credit link", { sourceRepositories: ["https://evil.example/a/b"] }],
+    ["duplicate credit links", { sourceRepositories: ["https://github.com/a/b", "https://github.com/a/b"] }],
     ["traversal in manifest", { manifest: [{ path: "../../etc/passwd", sizeBytes: 1 }] }],
     ["community package on a first-party path", { package: { ...validRecord.package, downloadUrl: "/packages/x-1.0.0.zip" } }],
   ])("rejects %s", (_label, patch) => {
@@ -320,15 +323,5 @@ describe("package contents", () => {
     );
     expect(kinds.map((k) => k.id)).toEqual(["instructions", "rules", "skills", "commands", "mcp", "hooks", "scripts", "docs"]);
     expect(kinds.filter((k) => k.executes).map((k) => k.id)).toEqual(["mcp", "hooks", "scripts"]);
-  });
-});
-
-describe("publishing template", () => {
-  it("is a valid catalog record once its placeholders are filled in", async () => {
-    const { CATALOG_ENTRY_TEMPLATE } = await import("@/lib/publishing");
-    const record = JSON.parse(CATALOG_ENTRY_TEMPLATE);
-    record.package.sizeBytes = 1024;
-    record.package.sha256 = "a".repeat(64);
-    expect(validateCatalog({ schemaVersion: 1, setups: [record] }).errors).toEqual([]);
   });
 });

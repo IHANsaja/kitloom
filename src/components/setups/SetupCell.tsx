@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Icon } from "@/components/ui/Icon";
 import { cx } from "@/components/ui/styles";
+import { setupHref } from "@/lib/catalog/summary";
 import { getAgent, getCategory } from "@/lib/catalog/taxonomy";
 import type { SetupSummary } from "@/types/catalog";
 
@@ -26,7 +27,7 @@ export function SetupCell({ setup }: { setup: SetupSummary }) {
       </p>
 
       <h3 className="mt-3 text-[1.0625rem] leading-snug font-semibold tracking-[-0.015em] break-words">
-        <Link href={`/setups/${setup.slug}`} className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-lime">
+        <Link href={setupHref(setup)}className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-lime">
           {setup.name}
         </Link>
       </h3>
@@ -68,7 +69,7 @@ export function SetupGrid({ setups, layout = "full" }: SetupGridProps) {
       )}
     >
       {setups.map((setup) => (
-        <li key={setup.slug} className="min-w-0">
+        <li key={`${setup.origin}:${setup.slug}`} className="min-w-0">
           <SetupCell setup={setup} />
         </li>
       ))}

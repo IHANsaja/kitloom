@@ -1,11 +1,11 @@
-# Deploying Kitloom to Cloudflare Pages
+# Deploying Kitloom
 
-Kitloom is a fully static export. There is no server, no database, no adapter, and no
-environment variable required at build or run time.
+Kitloom is a static export hosted on Cloudflare Pages. Accounts and community listings come
+from a Supabase project that the browser talks to directly. There is no server of our own.
 
-> Status: the build below has been run and verified locally. Nothing has been deployed, and
-> `kitloom.site` has not been connected, as part of creating this repository. Do those steps
-> yourself and confirm each one in the Cloudflare dashboard.
+> Status: the build below has been run and verified locally, and the database schema has
+> been applied to the Supabase project. Nothing has been deployed to Cloudflare, and
+> `kitloom.site` has not been connected. Do those steps yourself and confirm each one.
 
 ## Facts about the build
 
@@ -17,7 +17,7 @@ environment variable required at build or run time.
 | Development command | `npm run dev` |
 | Production build command | `npm run build` |
 | Build output directory | `out` |
-| Environment variables | None required |
+| Environment variables | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (both public) |
 | Response headers | `public/_headers` (copied to `out/_headers`) |
 | Not-found page | `out/404.html`, served by Pages for unknown paths |
 
@@ -26,12 +26,63 @@ environment variable required at build or run time.
 verifies their size and SHA-256 against the catalog. Running `next build` directly skips
 that step and ships a site whose Download buttons return 404.
 
-## 1. Repository
+**The two environment variables are baked in at build time.** They must be set in
+Cloudflare before the build runs; changing them later needs a redeploy. Without them the
+site still builds and lists the starter kits, but sign-in and publishing are disabled.
 
-The source is at https://github.com/IHANsaja/kitloom (public, default branch `main`), and
-`repositoryUrl` in `src/lib/site.ts` already points to it.
+Never add a Supabase secret or service-role key to this project's environment. It is a
+static site, so build-time values can end up in public JavaScript.
+
+## 1. Supabase
+
+Project: **Kitloom** (ref `xwoekncvlylaohjxrkgf`). The schema in `supabase/migrations/` is
+already applied. What remains is configuration that can only be done in the dashboard.
+
+### URL configuration (required before sign-in works in production)
+
+In **Authentication → URL Configuration**:
+
+| Setting | Value |
+|---|---|
+| Site URL | `https://kitloom.site` |
+| Redirect URLs | `https://kitloom.site/auth/callback`, `http://localhost:3000/auth/callback`, and your `https://<project>.pages.dev/auth/callback` |
+
+A sign-in that returns to an address not on this list is rejected by Supabase.
+
+### Sign-in methods
+
+The sign-in page shows only the methods that are enabled, with no code change needed.
+
+- **Email (one-time link)** is enabled by default. Supabase's built-in mail service is for
+  testing only: it is tightly rate-limited and only delivers to members of your Supabase
+  organisation. For real users, configure your own SMTP provider under
+  **Authentication → Emails → SMTP Settings**.
+- **GitHub (recommended for this audience):** create an OAuth App at
+  github.com → Settings → Developer settings → OAuth Apps with callback URL
+  `https://xwoekncvlylaohjxrkgf.supabase.co/auth/v1/callback`, then paste its Client ID and
+  Client Secret into **Authentication → Sign In / Providers → GitHub**. GitHub sign-ins get
+  their GitHub username as their public display name.
+- **Google:** the same pattern with a Google OAuth client. Its consent screen will show the
+  `supabase.co` address unless you verify your brand with Google or add a custom domain.
+
+OAuth client secrets are entered in the Supabase dashboard only. They never go in this
+repository or in Cloudflare.
+
+### Moderation
+
+Community listings are public as soon as they are published. To take one down, open
+**Table Editor → setups** and set its `status` to `hidden`. The owner still sees it,
+labelled as hidden, and cannot change the status back.
+
+### Checking the access rules
+
+After any change to tables or policies, run `supabase/tests/rls.sql` in the SQL editor. It
+simulates an owner, another user and an anonymous visitor in a transaction that is rolled
+back, and lists what each was allowed to do.
 
 ## 2. Create the Pages project
+
+The source is at https://github.com/IHANsaja/kitloom (public, default branch `main`).
 
 1. In the Cloudflare dashboard, go to **Workers & Pages** and create a Pages project by
    connecting to Git.
@@ -46,13 +97,19 @@ The source is at https://github.com/IHANsaja/kitloom (public, default branch `ma
    | Build output directory | `out` |
    | Root directory | leave empty |
 
-4. Environment variables: none are needed. If the build picks an older Node.js despite
-   `.node-version`, add `NODE_VERSION` = `22` for both Production and Preview.
+4. Environment variables, for both Production and Preview — copy the values from
+   `.env.local` or from Supabase **Project Settings → API Keys**:
+
+   | Name | Value |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | `https://xwoekncvlylaohjxrkgf.supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the `sb_publishable_…` key |
+
+   If the build picks an older Node.js despite `.node-version`, also add `NODE_VERSION` = `22`.
 5. Save and deploy. Check the build log for `4 kits verified.` followed by the Next.js
    route table.
 
-Every push to `main` then redeploys production, and every pull request gets a preview URL —
-which is how a catalog contribution can be reviewed before it is merged.
+Every push to `main` then redeploys production, and every pull request gets a preview URL.
 
 ## 3. Verify the deployment
 
@@ -63,6 +120,9 @@ On the `*.pages.dev` URL, check:
   the checksum on the page.
 - `/setups/does-not-exist` returns the Kitloom 404 page with status 404.
 - `/explore?agent=cursor` opens with the Cursor filter selected.
+- `/signin` shows the sign-in methods you enabled, and signing in lands on `/account`.
+- Publishing a test setup from `/publish` shows it at `/setup?slug=…` and in `/explore`,
+  and deleting it from `/account` removes it.
 
 ## 4. Connect kitloom.site
 
@@ -92,13 +152,15 @@ npm run build
 npx wrangler pages deploy out --project-name <project-name>
 ```
 
-This requires a Cloudflare login on your machine (`npx wrangler login`). Never commit an API
-token to the repository.
+This requires a Cloudflare login on your machine (`npx wrangler login`), and `.env.local`
+must be present so the build picks up the Supabase values. Never commit an API token.
 
 ## What does not work on this architecture
 
 Because the site is a static export: no route handlers or API routes, no server actions, no
 middleware, no request-time `searchParams` in Server Components, no `next/image`
-optimisation, no ISR. Search and filtering run in the browser. If a future feature needs a
-server (accounts, uploads, paid downloads), it will need Pages Functions or a Workers
-deployment through the OpenNext Cloudflare adapter; decide that then and update `CLAUDE.md`.
+optimisation, no ISR. Search, filtering, sign-in and publishing run in the browser, and
+community setup pages use `/setup?slug=…` because pages for database rows cannot be
+pre-rendered. Features that need a trusted server (file uploads, review queues, paid or
+private downloads) will need Pages Functions or a Workers deployment through the OpenNext
+Cloudflare adapter; decide that then and update `CLAUDE.md`.

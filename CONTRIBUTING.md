@@ -11,60 +11,39 @@ for it.
 
 ## List a setup
 
-You host the package; Kitloom lists it. Nothing is uploaded to this repository.
+You do this on the site, not in this repository.
 
-1. **Prepare the package.** Lay the files out the way a project expects them
-   (`AGENTS.md`, `.claude/skills/…`, `.cursor/rules/…`). Replace machine-specific paths and
-   personal details with placeholders.
+1. **Put the setup in a public GitHub repository.** Visitors download the whole repository
+   as a ZIP, so a dedicated repository containing just the setup works best. Lay the files
+   out the way a project expects them (`AGENTS.md`, `.claude/skills/…`, `.cursor/rules/…`).
 2. **Add a `README.md`.** What it does, what each file is for, how to install and customise
    it. If anything runs commands (hooks, scripts, MCP servers), say exactly what and why.
-3. **Identify the supported agents.** Only the ones the setup is written for.
-4. **Choose a licence** and include a `LICENSE` file.
-5. **Remove credentials and secrets.** Check MCP configuration and settings files twice.
-6. **Package as a ZIP** with one top-level folder, named `<slug>-<version>.zip`.
-7. **Validate.** Extract into an empty folder and confirm the contents. Compute the
-   checksum and size:
+3. **Add a `LICENSE` file.** Without one, others have no right to reuse your work.
+4. **Remove credentials and secrets.** Check MCP configuration and settings files twice.
+   Replace machine-specific paths and personal details with placeholders.
+5. **Sign in** at `/signin`.
+6. **Publish** at `/publish`: paste the repository link, choose "Read from GitHub", and
+   fill in the description, the agents it is written for, and the categories.
 
-   ```bash
-   shasum -a 256 your-setup-1.0.0.zip
-   ```
+The listing is public immediately. Kitloom stores your description plus a snapshot of the
+README and file list; the download is always the current state of your repository.
 
-   ```powershell
-   (Get-FileHash your-setup-1.0.0.zip -Algorithm SHA256).Hash.ToLower()
-   ```
+### What to know
 
-8. **Publish a release** in your own public GitHub repository with the ZIP attached.
-9. **Open a pull request** here that appends one record to `src/data/setups.json`. The
-   template is on the site's `/publish` page and in `src/lib/publishing.ts`.
+- Compatibility is shown as "declared by the creator". Tick only agents the setup targets.
+- If you built on other people's repositories, credit them under "Built from" (up to 8
+  GitHub links). They appear on your page as links; they are not included in the download.
+  Crediting a repository does not replace following its licence.
+- There is no checksum for a community setup, because the ZIP follows your repository.
+- Edit or delete a listing from `/account`. Editing re-reads the README and file list.
+- The URL name cannot be changed after publishing.
+- An account can list up to 25 setups.
 
-### Record rules
+### Moderation
 
-- `id` and `slug`: identical, unique, lowercase kebab-case.
-- `origin`: `"community"`.
-- `agents[].id` and `categories[]`: ids from `src/lib/catalog/taxonomy.ts`.
-- `agents[].compatibility`: `"declared"`, or `"tested"` only if you ran it with that agent.
-- `package.downloadUrl`:
-  `https://github.com/<owner>/<repo>/releases/download/<tag>/<file>.zip`. No other host.
-- `package.sha256`: 64 lowercase hex characters of the exact release asset.
-- `manifest[].path`: relative to the top-level folder; no leading `/`, no `..`.
-- `downloads`: `null`. `featured`: `false`.
-- Use `null` for anything you cannot provide. Do not guess. Unknown fields are rejected.
-
-Run `npm test` before pushing. It validates the whole catalog and prints each problem with
-the record it belongs to.
-
-### Review
-
-A maintainer downloads the ZIP, checks that it matches the checksum, manifest, and
-description, reads every file, and looks for secrets and unexplained commands. Kitloom does
-not run automated scanning and never executes package contents. A listing is not an
-endorsement, and compatibility remains the creator's declaration.
-
-### Updating or removing a listing
-
-Publish a new release, then open a pull request changing `version`, `package`, `manifest`,
-`readme`, `releaseNotes`, and `updatedAt`. To remove a listing, open a pull request deleting
-the record.
+Listings are not reviewed before they appear. Maintainers hide listings that contain
+secrets, malware, or someone else's work without permission. A listing is never an
+endorsement.
 
 ## Improve the site
 
@@ -85,10 +64,18 @@ npm run check
 `npm run check` runs lint, type-check, unit tests, and the production build. All four must
 pass.
 
+### Database changes
+
+Every change to tables or policies is a migration in `supabase/migrations/` with a matching
+`.down.sql`. The browser talks to the database directly, so policies are the security
+boundary: run `supabase/tests/rls.sql` after any change and include its output in the pull
+request. If you add an agent or category, change `src/lib/catalog/taxonomy.ts` and the
+check constraints on `public.setups` together.
+
 ### First-party starter kits
 
 Kits under `packages/` are zipped at build time. After changing a kit's files, bump its
-`version` in the catalog and run:
+`version` in `src/data/setups.json` and run:
 
 ```bash
 npm run packages:sync
@@ -99,5 +86,6 @@ if the catalog and the built ZIP ever disagree.
 
 ## Reporting a problem with a listing
 
-If a listed package contains secrets, malware, or someone else's work without permission,
-open an issue with the setup's slug and what you found. Do not paste secrets into the issue.
+If a listed setup contains secrets, malware, or someone else's work without permission,
+open an issue with the setup's URL name and what you found. Do not paste secrets into the
+issue.
