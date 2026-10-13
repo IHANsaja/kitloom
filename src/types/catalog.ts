@@ -10,6 +10,7 @@ export type License = string | null;
  * How compatibility with an agent was established.
  * - "declared": the creator says the setup works with this agent.
  * - "tested": the setup was actually verified with this agent.
+ * Every listing is "declared" today; "tested" exists so the two never get blurred later.
  */
 export type CompatibilityLevel = "declared" | "tested";
 
@@ -25,41 +26,35 @@ export interface Creator {
 
 export type PackageFormat = "zip";
 
-/** A reference to where the package binary lives. The binary itself is never in the catalog. */
+/**
+ * A reference to where the package lives. Kitloom stores no package files: the download is
+ * the ZIP GitHub generates from the creator's repository.
+ */
 export interface PackageMetadata {
   format: PackageFormat;
   downloadUrl: string | null;
-  sizeBytes: number | null;
-  sha256: string | null;
 }
 
-/** One file inside the package, relative to the package root. */
+/** One file in the repository, relative to its root. */
 export interface ManifestEntry {
   path: string;
   sizeBytes: number | null;
 }
 
-/**
- * - "first-party": a starter kit maintained in this repository under packages/.
- * - "community": published by a signed-in user; stored in the database, hosted on GitHub.
- */
-export type SetupOrigin = "first-party" | "community";
-
+/** A published setup. Every one comes from the database; see src/lib/community/setups.ts. */
 export interface Setup {
-  id: string;
   slug: string;
   name: string;
   description: string;
-  origin: SetupOrigin;
   creator: Creator;
   agents: AgentCompatibility[];
   categories: CategoryId[];
   tags: string[];
   version: Version | null;
-  releaseNotes: string | null;
   license: License;
   package: PackageMetadata;
-  repositoryUrl: string | null;
+  /** The public GitHub repository that holds the setup: https://github.com/<owner>/<repo> */
+  repositoryUrl: string;
   /**
    * Credits: other public GitHub repositories the creator says this setup draws on.
    * Canonical https://github.com/<owner>/<repo> links. Stated by the creator, not verified.
@@ -72,20 +67,13 @@ export interface Setup {
   updatedAt: string;
   /** Null until a reliable source of download statistics exists. Never estimated. */
   downloads: number | null;
-  featured: boolean;
 }
 
-export interface Catalog {
-  schemaVersion: 1;
-  setups: Setup[];
-}
-
-/** The fields needed to list, search, filter, and sort. Small enough to ship to the browser. */
+/** The fields needed to list, search, filter, and sort. */
 export interface SetupSummary {
   slug: string;
   name: string;
   description: string;
-  origin: SetupOrigin;
   creatorName: string;
   agents: AgentId[];
   categories: CategoryId[];
@@ -96,5 +84,4 @@ export interface SetupSummary {
   publishedAt: string;
   updatedAt: string;
   downloads: number | null;
-  featured: boolean;
 }

@@ -18,7 +18,7 @@ could be mistaken for a generic SaaS template, it is wrong.
 Influences, combined rather than copied: IDE sidebars and command palettes, source-control
 histories, package registries, technical documentation, editorial grids.
 
-Character: technical, precise, crafted, quiet. Dense enough for developers; never cramped.
+Character: technical, precise, crafted — and alive: threads are always moving somewhere. Dense enough for developers; never cramped.
 
 ## 2. Colour
 
@@ -89,7 +89,7 @@ Status is never colour-only: every semantic colour is paired with text or an ico
 ## 3. Typography
 
 - **Sans:** Geist Sans — interface, headings, body.
-- **Mono:** Geist Mono — technical metadata only: versions, file paths, checksums, slugs,
+- **Mono:** Geist Mono — technical metadata only: versions, file paths, repository names, slugs,
   identifiers, keyboard shortcuts, eyebrow labels, counts.
 
 Both ship from the `geist` npm package (SIL OFL), self-hosted through `next/font`; no
@@ -113,7 +113,7 @@ runtime font request to a third party. Headings are never monospace.
 - Use `tabular-nums` on versions, counts, sizes, and dates.
 - Prose measure: 60–72 characters (`max-w-prose` or `max-w-[68ch]`).
 - Headings use `text-balance`; long paragraphs use `text-pretty`.
-- Long slugs, URLs, and checksums must wrap (`break-all` / `break-words`), never overflow.
+- Long slugs, URLs, and repository names must wrap (`break-all` / `break-words`), never overflow.
 
 ## 4. Layout
 
@@ -149,7 +149,7 @@ Controls share heights so rows align: 32px (compact: filter rows, copy buttons),
 ## 5. Components
 
 **Site header.** 56px, bottom hairline, sticky, solid `carbon` (no blur/glass). Left: woven
-mark + lowercase wordmark `kitloom`. Centre/left: Explore, Agents, About. Right: Publish as
+mark + lowercase wordmark `kitloom`. Centre/left: Explore, Agents (its own page), About. Right: Publish as
 the only bordered action. Current route shown by `fg` text plus a 2px lime underline and
 `aria-current="page"`. Below 768px the links collapse into a disclosure menu opened by a
 labelled button; the menu is a full-width ruled list. Beside Publish sits one quiet text
@@ -229,13 +229,13 @@ label ("Note", "Caution"). Used for the safety reminder and configuration warnin
 tokens: `surface` fill, 1px `line`, 4px radius, no shadow, a 2px left rule (lime for
 success, `danger` for errors, `info` for notes), title in sans, description in mono `fg-2`.
 The success icon is the small woven mark. Toasts confirm things that really happened —
-"Checksum copied", "Copy failed" — and carry the checksum reminder after a download link is
+"Command copied", "Copy failed", "Setup published" — and carry the inspect-first reminder after a download link is
 followed. They never announce a successful download (the browser does not tell us) and are
 never used for marketing. Critical information is never toast-only.
 
 **Empty state.** A ruled panel with a mono eyebrow stating the state plainly ("0 results"),
-one sentence of guidance, and the one useful action (clear filters / publish). No
-illustration, no emoji.
+one sentence of guidance, the one useful action (clear filters / publish), and the
+`EmptyLoom` illustration at the right. No emoji.
 
 **Code block.** `surface` fill, 1px `line`, mono 13px, horizontal scroll, optional header
 bar with a label and Copy button.
@@ -245,8 +245,9 @@ bar with a label and Copy button.
 **Home `/`** — the working front door, not a marketing page.
 - Top band, two columns split by a vertical rule. Left: eyebrow, display headline, one
   sentence, the search form (submits to `/explore?q=`), and the five-step journey as a mono
-  line. Right: the real file manifest of a real catalog entry, labelled with its name and
-  linked to its page — showing concretely what "a kit" is.
+  line. Right: the real file list of the most recently published setup, labelled with its
+  name and linked to its page — showing concretely what "a kit" is. With nothing published
+  it explains what a kit is in two sentences instead.
 - "By agent": a ruled row of agent cells with real counts, each linking to a filtered Explore.
 - "Latest": the newest setups as setup cells, with a link to all.
 - "By category": ruled list with descriptions and real counts.
@@ -256,12 +257,18 @@ bar with a label and Copy button.
 the live count and the sort control. State lives in the URL (`q`, `agent`, `category`,
 `sort`) so any view is shareable.
 
-**Setup detail `/setups/[slug]`** — breadcrumb; header with name, description, agents, tags;
-then 8/4: main column (README, file manifest, install steps, release notes) and a sticky
-aside (download panel, checksum, metadata rows, source link, safety notice).
+**Setup detail** — breadcrumb; header with name, description, categories, tags; then 8/4:
+main column (README, file list with a "what these files do" breakdown, install steps) and a
+sticky aside (Download ZIP, source repository with the no-checksum note, compatibility,
+metadata rows, "Built from" credits, safety notice).
 
-**Community setup `/setup?slug=`** — the same composition as the setup detail page, rendered
-in the browser. While loading it shows one mono status line, not a skeleton. The owner sees
+**Loading and counts.** All listings arrive from the database after the page loads. While
+they load, lists show one mono status line with the `StringLoader` ("Loading setups…"), never skeletons or
+shimmer, and counts show an em dash — never a zero that might be wrong. A zero is only
+shown once the database has answered.
+
+**Setup `/setup?slug=`** — the setup detail composition, rendered in the browser. While
+loading it shows one mono status line, not a skeleton. The owner sees
 a `surface` band above the header with "Your setup", its visibility, and Edit.
 
 **Built from (credits).** When a creator lists other repositories their setup draws on, the
@@ -286,37 +293,121 @@ field exists anywhere.
 to its owner), Publish and Sign out; then a ruled list of the user's setups with Edit and
 the two-step Delete. A hidden listing is labelled in `warning` text.
 
+**Agents `/agents`** — a ledger, not a grid: one full-width ruled row per recognised agent,
+in three cells — number, name and vendor (4 cols); up to three setups that declare support,
+or one sentence saying there are none (5 cols); the count and one action, Browse or Publish
+one (3 cols). The header carries the `Harness` illustration. It must not repeat the
+home page layout.
+
+**Page margins.** At 1520px and wider, the space outside the frame is strung with loom
+strings (`Gutters`) that respond to the cursor — the one place where motion is driven by the
+visitor rather than by time. The feel is physical: a spring per string, slightly
+under-damped so a pluck rings and settles in about a second, with a little coupling so
+neighbours stir. At rest the strings are plain `line` hairlines; a moving string is lime.
+Silent, always. Fixed and behind all content; it listens on the window and never
+intercepts clicks or scrolling. Still under reduced motion and on touch devices. Below
+1520px the margins stay empty.
+
 **About `/about`** — single reading column with a ruled section index.
 
-**404** — states what happened and links to Explore.
+**404** — "The thread ends here": states what happened, links to Explore and home, and
+shows `SnappedStrings` at the right.
 
 ## 7. Motion
 
-Motion is built with **GSAP** (`gsap` + `@gsap/react`'s `useGSAP`, plus `ScrollTrigger`).
-It is used with restraint: motion explains structure (threads assembling into a sheet), it
-never decorates.
+Kitloom moves. Motion is part of the identity: threads, looms, knots and kits, drawn in the
+carbon-and-lime palette. It comes in three layers, each with its own rules.
+
+### 7.1 Interface motion (GSAP)
+
+Built with **GSAP** (`gsap` + `@gsap/react`'s `useGSAP`, `ScrollTrigger`, `MotionPathPlugin`).
 
 | Moment | Behaviour | Timing |
 |---|---|---|
-| Page-top entrance | Headline lines and the lead cells rise 14px and fade in, staggered | 0.5s, `power3.out`, staggered across 0.4s |
-| Section reveal | A section that starts below the fold rises 16px and fades in once when it reaches 88% of the viewport | 0.5s, once only |
+| Page-top entrance | Headline lines and the lead cells rise 14px and fade in, staggered | 0.5s, `power3.out`, spread over 0.4s |
+| Section reveal | A section that starts below the fold rises 16px and fades in once at 88% of the viewport | 0.5s, once only |
 | Results update | When search/filter/sort changes, result cells fade up 8px | 0.25s, 30ms stagger, capped at 12 cells |
 | Mobile menu | Menu rows slide down 6px and fade in | 0.18s |
 | Hover / focus | Colour, border, background; a 2px arrow nudge | CSS, 120–160ms |
 
+The shared wrapper is `src/components/ui/Reveal.tsx`.
+
+### 7.2 SVG illustrations (GSAP)
+
+A library of animated SVGs in `src/components/motion/`. Timeline illustrations are driven by
+one hook, `useSvgMotion`. The strings — page margins, loader, 404 — share one spring
+simulation, `stringEngine.ts`, so everything a visitor can touch or wait on moves with the
+same physics. Every page has at least one illustration, and each says something about its page.
+
+| Illustration | Where | What it shows |
+|---|---|---|
+| `WeaveField` | Home hero (fallback for the WebGL loom) | Warp and weft with lime shuttles passing through |
+| `ThreadTick` | Every section header | A thread pulled taut and knotted as the section arrives |
+| `AgentThreads` | Home, "By agent" | Threads from several agents running into one kit |
+| `Harness` | Agents header | A loom harness with one heddle per agent: alternate heddles lift, a lime shuttle passes through the shed, and the sets swap |
+| `RepoToZip` | Home, publish band | Files leaving a repository and being packed into a ZIP |
+| `Shuttle` | Explore header | A shuttle carrying the weft through the warp, row by row |
+| `KitUnfold` | Setup detail header | A kit opening, its files rising out to be read |
+| `Stitch` | Publish header | A needle stitching a seam, one stitch per step |
+| `Latch` | Sign in | A thread looping through a latch — no key, no password |
+| `Spool` | Account | Thread winding onto your spool |
+| `ScrollThread` | About | A thread let out as you scroll through the page |
+| `SnappedStrings` | 404 | The thread you followed has snapped: one lime string hangs in two loose halves, the others still ring now and then, and all of them can be played with the cursor |
+| `EmptyLoom` | Every empty state | A threaded loom with one weft waiting |
+| `WeftWave` | Footer | A row of warp ends with a wave travelling along it |
+| `StringLoader` | Every loading line | A wave of plucks running along a short row of strings |
+| `Gutters` (playable strings) | The margins outside the frame, every page, at 1520px and wider | Loom strings that react to the cursor: they bow away as it comes near, are plucked when it sweeps across, turn lime and vibrate until they settle, and pass movement to their neighbours |
+
+Rules for adding one:
+
+- Vocabulary is weaving and kits only: threads, warp, weft, shuttles, needles, knots,
+  spools, looms, folders, files. No abstract blobs, particles, or generic "tech" shapes.
+- Colour comes from tokens via classes (`stroke-line-control`, `stroke-fg-2`, `fill-lime`…).
+  Lime is the moving accent — the active thread — never the whole drawing.
+- Strokes are 1–2px, square or butt caps for structure, round only for thread. No fills
+  except `carbon` (to mask) and small lime knots. No gradients, glows, or shadows.
+- **The markup is the finished drawing.** Animation only adds to it. Without JavaScript,
+  or with reduced motion, every illustration is complete, static artwork.
+- Loops run only while on screen (the hook pauses them otherwise, using
+  IntersectionObserver so it stays correct when listings load and the page grows) and are slow: 3–5s a
+  cycle, with a rest between cycles. Nothing flashes, strobes, or shakes.
+- Illustrations are decorative: `aria-hidden`, never the only carrier of information, and
+  never placed where they compete with a control. Hide them below `md` when space is tight.
+
+### 7.3 WebGL scenes (three.js TSL)
+
+Two small scenes written with three.js **TSL** node materials on its WebGL 2 backend, in
+`src/components/motion/tsl/scenes.ts`, mounted through `TslScene` in `Scenes.tsx`.
+
+| Scene | Where | Fallback |
+|---|---|---|
+| `loom` — a rippling woven sheet with lime weft threads | Home hero backdrop | `WeaveField` |
+| `kit` — an open kit frame with files in orbit | About header | `KitUnfold` |
+
 Rules:
 
-- All GSAP code lives in Client Components and goes through `useGSAP` so it is reverted on
-  unmount. The shared wrapper is `src/components/ui/Reveal.tsx`; prefer it to ad-hoc tweens.
-- Everything is wrapped in `gsap.matchMedia("(prefers-reduced-motion: no-preference)")`.
-  With reduced motion, nothing is hidden and nothing moves.
-- Content must never depend on JavaScript to become visible. Entrance items are pre-hidden
-  only under `html.js`, and a CSS fallback reveals them after 3s if GSAP never runs.
-  Below-the-fold reveals are hidden by GSAP itself, only when they start off-screen.
-- Animate `opacity` and `transform` only. No layout properties, no scroll-jacking, no
-  parallax, no looping or idle animation, no animated gradients.
-- No animation may delay interaction: nothing longer than 0.6s, no entrance on controls
-  the user is about to click.
+- A scene is an **enhancement of an SVG**, never a replacement. The SVG renders first and
+  stays if WebGL is unavailable, the chunk fails, or any condition below is not met.
+- three.js is large. It is loaded only by dynamic import, only when the scene scrolls into
+  view, only at `md` width and above, and never when the visitor prefers reduced motion or
+  has asked to save data. No page may import `tsl/scenes.ts` statically.
+- Scenes render only while on screen and while the tab is visible. Pixel ratio is capped
+  at 1.5. One scene per page.
+- Unlit, flat, line-based: `MeshBasicNodeMaterial`, token colours read from CSS at mount,
+  transparent background. No lighting rigs, bloom, post-processing, textures, or models.
+- A scene behind text is masked so it fades out under the copy; body text must keep its
+  measured contrast.
+
+### 7.4 Rules for all motion
+
+- Everything runs inside `gsap.matchMedia("(prefers-reduced-motion: no-preference)")` or an
+  equivalent check. With reduced motion, nothing is hidden and nothing moves.
+- Content must never depend on JavaScript to become visible. Anything pre-hidden for an
+  entrance is hidden only under `html.js`, with a CSS fallback that reveals it after 3s.
+- Animate `opacity`, `transform` and stroke dash offsets only. No layout properties, no
+  scroll-jacking, no parallax.
+- Motion never delays interaction: no entrance on a control the user is about to click, and
+  no loop inside or directly beside a form field.
 
 ## 8. Responsive behaviour
 
@@ -348,14 +439,15 @@ horizontally, inside their own box. Touch targets are at least 44px tall below 1
 ## 10. Voice
 
 Plain, specific, developer-to-developer. Say what a thing is and what will happen. Label
-buttons with the action ("Download ZIP", "Copy checksum", "Clear filters"). Be honest about
-limits: "declared by the creator", "not provided", "a checksum proves integrity, not safety".
+buttons with the action ("Download ZIP", "Read from GitHub", "Clear filters"). Be honest about
+limits: "declared by the creator", "not provided", "there is no checksum to verify".
 No hype words, no exclamation marks, no emoji.
 
 ## 11. Prohibited
 
 Glow gradients; purple/blue "AI" gradients; glassmorphism and backdrop blur; drop shadows;
-large rounded cards; decorative blobs or orbs; fake terminal windows as decoration; emoji as
+large rounded cards; decorative blobs, orbs or particles; illustration outside the weaving
+vocabulary; WebGL without an SVG fallback; fake terminal windows as decoration; emoji as
 identity; pill-badge clusters; stock photos and illustrations; fake statistics, testimonials,
 user counts or download counts; login or profile UI that does nothing; sign-in buttons for providers that are not enabled;
 password fields; upload controls; any control that does

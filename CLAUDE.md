@@ -13,7 +13,7 @@ materially changes.
 | Repository | https://github.com/IHANsaja/kitloom |
 | Category | AI agent setup discovery and sharing platform |
 | Business model (initial) | Entirely free |
-| Architecture | Static site + Supabase (accounts and community listings) |
+| Architecture | Static site + Supabase (accounts and all listings) |
 | Primary users | Software developers, AI-assisted developers, agent workflow builders, open-source contributors |
 | Mission | Make useful AI agent configurations easy to discover, understand, reuse, share, and download |
 
@@ -48,7 +48,11 @@ Antigravity, and other coding agents (the registry of known agents lives in
 - No `any`. No `@ts-ignore`.
 - Modular components; no giant single-file pages, no pointless fragmentation.
 - Avoid unnecessary dependencies and unnecessary client-side JavaScript. The approved UI
-  libraries are GSAP (motion) and Sonner (toasts); see `design.md` §5 and §7 for their rules.
+  libraries are GSAP (motion and SVG animation), three.js (WebGL scenes, TSL only) and
+  Sonner (toasts); see `design.md` §5 and §7 for their rules.
+- **three.js must never be in a page's initial JavaScript.** It is reached only through
+  the dynamic import in `src/components/motion/Scenes.tsx`. Do not import `three` or
+  `src/components/motion/tsl/scenes.ts` statically from anywhere else.
 - Server Components by default. Add `"use client"` only where interaction requires it.
 - The only external services are Supabase (free tier) and GitHub's public API. Do not add
   a paid API or another mandatory service.
@@ -65,73 +69,71 @@ Antigravity, and other coding agents (the registry of known agents lives in
 - **Hosting:** Cloudflare Pages, as a fully static export (`output: "export"` → `out/`).
 - **Supabase project:** `Kitloom` (ref `xwoekncvlylaohjxrkgf`, region ap-south-1). Provides
   Auth and Postgres. The browser talks to it directly with the publishable key.
-- **Listings come from two places:**
-  - *First-party starter kits*: records in `src/data/setups.json`, files in
-    `packages/<slug>/`, zipped deterministically at build into `public/packages/`
-    (git-ignored) and pre-rendered at `/setups/<slug>`.
-  - *Community setups*: rows in the `public.setups` table, published by signed-in users
-    through `/publish`, rendered in the browser at `/setup?slug=<slug>`.
-- **Package storage:** Kitloom stores no community package files. A community setup points
+- **Every listing comes from the database.** Nothing is built into the site: there is no
+  catalog file, no bundled kits, no seed data in the repository. Rows in `public.setups`
+  are published by signed-in users through `/publish` and rendered in the browser at
+  `/setup?slug=<slug>`.
+- **Package storage:** Kitloom stores no package files and has no upload. A setup points
   at a public GitHub repository; the download is the ZIP GitHub generates from its default
-  branch (`/archive/refs/heads/<branch>.zip`). There is no upload.
+  branch (`https://github.com/<owner>/<repo>/archive/refs/heads/<branch>.zip`). Creators
+  update a setup by pushing to GitHub.
 - No backend of our own, no route handlers, no server actions, no payments.
 
 Because the site is a static export, anything that needs a request-time server (dynamic
 `searchParams` in Server Components, route handlers, middleware, `next/image` optimisation,
-server actions) is unavailable. Search, filtering, sign-in and publishing all run in the
-browser. That is why community setups use a query-string URL: a static export cannot
-pre-render pages for rows that do not exist at build time.
+server actions) is unavailable. Listing, search, filtering, sign-in and publishing all run
+in the browser. That is why setups use a query-string URL: a static export cannot
+pre-render pages for rows that do not exist at build time. It also means listings are not
+in the HTML that search engines receive.
 
 ### Environment variables
 
 | Name | Required | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | For accounts and community listings | Public |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | For accounts and community listings | Public by design |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes, for any listing to appear | Public |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes, for any listing to appear | Public by design |
 
-Both are read at **build** time. Without them the site still builds and shows the starter
-kits; sign-in and publishing show a "not configured" notice.
+Both are read at **build** time. Without them the site still builds, but it has nothing to
+list and says so ("The directory is not connected").
 
 ## 5. Repository map
 
 ```
-packages/<slug>/                 Source files of first-party starter kits (zipped at build)
-scripts/packages.mjs             Builds kit ZIPs; verifies catalog size/sha256/manifest/readme
 supabase/migrations/             SQL migrations, each with a matching .down.sql
 supabase/tests/rls.sql           Role-simulation test for the access rules (rolled back)
 public/_headers                  Cloudflare Pages response headers
 src/app/                         Routes (see below)
 src/components/                  auth/ files/ filters/ layout/ publish/ search/ setups/ ui/
-src/data/setups.json             First-party catalog
-src/lib/catalog/                 zod schema, loader, taxonomy, pure query + summary helpers
+src/components/motion/           Animated SVG library (useSvgMotion, Ambient, Illustrations),
+                                 stringEngine.ts + Strings.tsx (playable margins, loader, 404),
+                                 Scenes.tsx (lazy WebGL wrapper), tsl/scenes.ts (three.js TSL)
+src/lib/catalog/                 taxonomy, pure query (search/filter/sort), summary helpers
 src/lib/community/               Supabase-backed setups: API, row mapping, validation, GitHub reader
 src/lib/packages/                URL safety, path safety, download access, content classifier
 src/lib/supabase/                Browser client and session/auth helpers
 src/lib/site.ts                  Site-level config
-src/types/catalog.ts             Listing types shared by both sources
+src/types/catalog.ts             Listing types
 docs/deployment.md               Cloudflare Pages + Supabase deployment steps
 ```
 
-Routes: `/` · `/explore` · `/setups/[slug]` (first-party, static) · `/setup?slug=`
-(community, client) · `/publish` (`?edit=<slug>`) · `/signin` · `/auth/callback` ·
-`/account` · `/about`.
+Routes: `/` · `/explore` · `/agents` · `/setup?slug=` · `/publish` (`?edit=<slug>`) · `/signin` ·
+`/auth/callback` · `/account` · `/about`.
 
 ## 6. Architectural boundaries
 
 | Concern | Owner | Notes |
 |---|---|---|
-| First-party catalog | `src/lib/catalog/index.ts` | The only module that imports `setups.json`. Validated with zod at build; an invalid catalog fails the build with a per-record report. Build/server only. |
-| Query logic | `src/lib/catalog/query.ts` | Pure `searchSetups` / filter / sort / facets over `SetupSummary`. Used for both sources. |
+| Setup data | `src/lib/community/setups.ts` | The only module that queries `setups`/`profiles`. `rowToCommunitySetup` treats every row as untrusted and drops or strips anything unsafe before it reaches the UI. |
+| Listing hook | `src/lib/community/useSetups.ts` | One fetch per page load, shared by every component. Exposes `state` (`loading`/`ready`/`error`/`off`): an empty list is only a fact once the state is `ready`. |
+| Query logic | `src/lib/catalog/query.ts` | Pure `searchSetups` / filter / sort / facets over `SetupSummary`. |
 | Taxonomy | `src/lib/catalog/taxonomy.ts` | Known agents and categories. **Must match the check constraints on `public.setups`** — change both together, with a migration. |
-| Community data | `src/lib/community/setups.ts` | The only module that queries `setups`/`profiles`. `rowToCommunitySetup` treats every row as untrusted and drops or strips anything unsafe before it reaches the UI. |
-| Merged listing | `src/lib/community/useAllSetups.ts` | Built-in summaries first, community summaries merged when the database answers. One fetch per page load. |
 | GitHub reader | `src/lib/community/github.ts` | Unauthenticated GitHub REST calls from the browser at publish time (README, file list, licence, default branch). |
 | Storage references | `src/lib/packages/urls.ts` | Decides which download and link URLs are acceptable. |
 | Download eligibility | `src/lib/packages/access.ts` | `getDownloadAccess(setup)` is the single place that decides whether and how a setup can be downloaded. Today everything is free. |
 | Auth | `src/lib/supabase/auth.ts` | `useSession()` store, enabled-provider discovery, safe redirect paths. |
-| Package contents | `src/lib/packages/contents.ts` | Classifies manifest paths (skills, hooks, MCP config…) as a reading aid. Not a scanner. |
+| Package contents | `src/lib/packages/contents.ts` | Classifies file paths (skills, hooks, MCP config…) as a reading aid. Not a scanner. |
 
-UI components never query Supabase or read `setups.json` directly.
+UI components never query Supabase directly.
 
 ### Database (the real security boundary)
 
@@ -146,17 +148,21 @@ validation exists only to give good error messages.
 - `setups` — public read of `status = 'published'`; owners also see their own hidden rows.
   Insert/update/delete only by the owner. `owner_id`, `status`, `id` and timestamps are not
   grantable columns: `owner_id` defaults to `auth.uid()`, `status` to `'published'`.
-  `slug` cannot be updated. A trigger caps accounts at 25 setups and validates tags.
+  `slug` cannot be updated. A trigger caps accounts at 25 setups and validates tags and
+  credit links.
 - `status = 'hidden'` is moderation: set by a maintainer in the Supabase dashboard.
 - Every schema change ships as a migration in `supabase/migrations/` with a `.down.sql`,
   and is followed by `supabase/tests/rls.sql` and the Supabase security advisor.
+- Do not add seed or test rows through migrations. Data is created by publishing.
 
-### Listing rules (both sources)
+### Listing rules
 
 - Slugs are lowercase kebab-case. Dates are ISO-8601.
-- Download references must be one of: `/packages/<file>.zip` (first-party), a GitHub release
-  asset, or a GitHub repository archive. Nothing else, ever — see `isAllowedDownloadUrl`.
-- `repositoryUrl` for community setups is exactly `https://github.com/<owner>/<repo>`.
+- The only acceptable download reference is a GitHub repository archive, derived in the
+  app from `repository_url` and `default_branch`. Nothing else, ever — see
+  `isAllowedDownloadUrl`.
+- `repositoryUrl` is exactly `https://github.com/<owner>/<repo>`, and the repository must
+  be public or the download fails for everyone but its owner.
 - `sourceRepositories` ("Built from") are credits: up to 8 other GitHub repositories, in
   the same canonical form, that the creator says the setup draws on. They are display-only
   links stated by the creator. They are never downloaded, fetched, or treated as verified,
@@ -164,14 +170,8 @@ validation exists only to give good error messages.
   the form, `rowToCommunitySetup`, and the `setups_before_write` trigger.
 - `downloads` is `null`: there is no trustworthy counter. "Most downloaded" sorting only
   appears if real data ever exists.
-- Community setups have no checksum (the archive follows the repository) and the UI says so.
-
-### First-party kits
-
-`npm run packages:check` (run automatically before `dev` and `build`) rebuilds every kit ZIP
-and fails if the catalog's `sizeBytes`, `sha256`, `manifest`, or `readme` do not match the
-real artifact. After editing files under `packages/`, run `npm run packages:sync` and bump
-the kit's `version`.
+- There are no checksums. The archive follows the repository, so there is no fixed value to
+  compare against, and the UI says so rather than implying integrity checking.
 
 ## 7. Security rules
 
@@ -184,7 +184,8 @@ the kit's `version`.
 - Sign-in is passwordless only (OAuth or emailed link, PKCE flow). Do not add password
   fields. Post-sign-in redirects go through `safeNextPath` (same-site paths only).
 - Never display a user's email address to anyone but that user.
-- A SHA-256 checksum proves integrity against a known value. It does not prove safety.
+- Never show or imply a checksum, signature, or "verified" state for a download: the ZIP
+  is generated by GitHub from a moving branch.
 - If ZIP uploads are ever added: reject path traversal and absolute paths, cap archive
   size / file count / compression ratio, never extract blindly, and do it on a backend.
 
@@ -207,9 +208,7 @@ link that is public anyway.
 | Lint | `npm run lint` |
 | Type-check | `npm run typecheck` |
 | Unit tests | `npm test` |
-| Rebuild kits and verify catalog integrity | `npm run packages:check` |
-| Write real kit size/checksum/manifest into the catalog | `npm run packages:sync` |
-| Production build (static export to `out/`) | `npm run build` — never bare `next build`, which skips the kit ZIPs |
+| Production build (static export to `out/`) | `npm run build` |
 | Everything | `npm run check` |
 
 ## 10. Workflow
@@ -232,6 +231,12 @@ connected unless it was actually done and verified.
 - **Entrance animation.** Items are pre-hidden by CSS only under `html.js` (set by an inline
   script in the root layout) with a 3s CSS fallback. Never hide content in a way that
   depends on GSAP loading.
+- **SVG illustrations.** One hook, `useSvgMotion`, drives all of them: it builds a paused
+  GSAP timeline, plays it only while the SVG is on screen, and reverts on unmount. The
+  markup must be the finished drawing; animation only adds to it.
+- **WebGL scenes.** `TslScene` always renders an SVG fallback and upgrades to a three.js
+  scene only when it is on screen, at `md` width or more, with motion welcome and data
+  saving off. In development it logs a warning when a scene falls back.
 - **Toasts.** Sonner injects styles at runtime; the theme overrides in `globals.css` are
   prefixed with `html` to win on specificity.
 - **Sign-in methods are discovered, not configured.** The sign-in page asks Supabase which
@@ -240,7 +245,11 @@ connected unless it was actually done and verified.
 - **Publish snapshot.** On publish and on every edit, the form re-reads the README, file
   list, licence and default branch from GitHub and stores them. These are supplied by the
   client, so they are display data only — never a basis for trust.
+- **No built-in listings.** The four starter kits, the JSON catalog, the ZIP build script
+  and the `/setups/<slug>` pages were removed on 2026-10-13 at the owner's request. Do not
+  reintroduce bundled or hard-coded listings; if examples are wanted, publish them like
+  any other setup.
 - **Licence.** The site's source, design, and branding are proprietary (`LICENSE`, all rights
-  reserved; viewing and forking to contribute is allowed). Starter kits in `packages/` stay
-  MIT under their own `LICENSE` files. Listed setups keep their creators' licences. Do not
+  reserved; viewing and forking to contribute is allowed). Listed setups keep their
+  creators' licences. Do not
   add a dependency whose licence forbids use in a closed-source commercial product.

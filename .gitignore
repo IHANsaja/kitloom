@@ -4,8 +4,6 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
-# Kit ZIPs are build artifacts generated from packages/ by scripts/packages.mjs
-public/packages/
 
 # Never commit secrets. The site needs no environment variables.
 .env

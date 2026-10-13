@@ -1,10 +1,8 @@
 /**
- * URL safety for everything that comes from catalog data, the database, or package
- * READMEs. All such values are treated as untrusted external input.
+ * URL safety for everything that comes from the database or from package READMEs.
+ * All such values are treated as untrusted external input.
  */
 
-const FIRST_PARTY_PACKAGE_PATH = /^\/packages\/[a-z0-9][a-z0-9.-]*\.zip$/;
-const GITHUB_RELEASE_ASSET_PATH = /^\/[\w.-]+\/[\w.-]+\/releases\/download\/[^/]+\/[^/]+\.zip$/;
 const GITHUB_ARCHIVE_PATH = /^\/[\w.-]+\/[\w.-]+\/archive\/(?:HEAD|refs\/heads\/[A-Za-z0-9._/-]+)\.zip$/;
 const GITHUB_NAME = /^[A-Za-z0-9_.-]{1,100}$/;
 const GITHUB_BRANCH = /^[A-Za-z0-9._/-]{1,255}$/;
@@ -21,24 +19,6 @@ function parseUrl(value: string): URL | null {
 export function isSafeHttpsUrl(value: string): boolean {
   const url = parseUrl(value);
   return url !== null && url.protocol === "https:" && url.username === "" && url.password === "";
-}
-
-/** A ZIP built from packages/ in this repository and served from this site. */
-export function isFirstPartyPackagePath(value: string): boolean {
-  return FIRST_PARTY_PACKAGE_PATH.test(value) && !value.includes("..");
-}
-
-/** A release asset on github.com: /<owner>/<repo>/releases/download/<tag>/<file>.zip */
-export function isGitHubReleaseAssetUrl(value: string): boolean {
-  if (!isSafeHttpsUrl(value)) return false;
-  const url = parseUrl(value);
-  return (
-    url !== null &&
-    url.hostname === "github.com" &&
-    url.port === "" &&
-    GITHUB_RELEASE_ASSET_PATH.test(url.pathname) &&
-    !url.pathname.includes("..")
-  );
 }
 
 export interface GitHubRepo {
@@ -125,9 +105,9 @@ export function isGitHubArchiveUrl(value: string): boolean {
   );
 }
 
-/** The only kinds of download reference Kitloom will link to. */
+/** The only kind of download reference Kitloom will link to: a GitHub repository archive. */
 export function isAllowedDownloadUrl(value: string): boolean {
-  return isFirstPartyPackagePath(value) || isGitHubReleaseAssetUrl(value) || isGitHubArchiveUrl(value);
+  return isGitHubArchiveUrl(value);
 }
 
 export type MarkdownLink =
@@ -153,15 +133,11 @@ export function resolveMarkdownLink(href: string | undefined): MarkdownLink {
 }
 
 /**
- * File name of a download reference, for the `download` attribute and install commands.
- * Null when it cannot be known in advance (a HEAD archive is named by GitHub at download).
+ * The name GitHub gives the downloaded file: <repo>-<branch>.zip. Null for a HEAD archive,
+ * whose name is only decided at download time.
  */
 export function fileNameFromDownloadUrl(value: string): string | null {
-  if (isGitHubArchiveUrl(value)) {
-    const match = /^\/[\w.-]+\/([\w.-]+)\/archive\/refs\/heads\/(.+)\.zip$/.exec(new URL(value).pathname);
-    return match?.[1] && match[2] ? `${match[1]}-${match[2].replaceAll("/", "-")}.zip` : null;
-  }
-  const path = value.startsWith("/") ? value : (parseUrl(value)?.pathname ?? "");
-  const name = path.split("/").pop() ?? "";
-  return /^[\w.-]+\.zip$/.test(name) ? name : null;
+  if (!isGitHubArchiveUrl(value)) return null;
+  const match = /^\/[\w.-]+\/([\w.-]+)\/archive\/refs\/heads\/(.+)\.zip$/.exec(new URL(value).pathname);
+  return match?.[1] && match[2] ? `${match[1]}-${match[2].replaceAll("/", "-")}.zip` : null;
 }

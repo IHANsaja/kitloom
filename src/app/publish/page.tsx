@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PublishForm } from "@/components/publish/PublishForm";
 import { Band } from "@/components/ui/Frame";
 import { Notice } from "@/components/ui/Notice";
+import { Stitch } from "@/components/motion/Illustrations";
 
 export const metadata: Metadata = {
   title: "Publish a setup",
@@ -44,13 +45,16 @@ export default function PublishPage() {
   return (
     <>
       <Band as="div">
-        <div className="cell-x py-10 lg:py-12">
+        <div className="cell-x flex items-center justify-between gap-10 py-10 lg:py-12">
+          <div>
           <p className="eyebrow text-fg-3">Publish</p>
           <h1 className="mt-2 text-h1 text-balance">List your setup</h1>
           <p className="mt-4 max-w-[66ch] text-[1.0625rem] leading-relaxed text-fg-2 text-pretty">
             Your files stay in your own public GitHub repository. Kitloom stores a description and
             links to the ZIP that GitHub builds from it. Listing is free.
           </p>
+          </div>
+          <Stitch className="hidden h-[84px] w-auto shrink-0 md:block" />
         </div>
       </Band>
 

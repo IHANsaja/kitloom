@@ -1,5 +1,6 @@
 /**
- * Community setups: listings that signed-in users publish, stored in Supabase.
+ * Setups: the listings that signed-in users publish, stored in Supabase. This is the
+ * only source of listings; nothing is built into the site.
  *
  * Trust model: the browser reads and writes the database directly, so the database's Row
  * Level Security and check constraints are the real gate (see supabase/migrations). The
@@ -172,11 +173,9 @@ export function rowToCommunitySetup(row: unknown): CommunitySetup | null {
   const githubUsername = text(profile?.github_username, 39);
 
   const setup: Setup = {
-    id: slug,
     slug,
     name: name.trim(),
     description: description.trim(),
-    origin: "community",
     creator: {
       name: text(profile?.display_name, 80) ?? "Kitloom member",
       url: githubUsername && /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/.test(githubUsername) ? `https://github.com/${githubUsername}` : null,
@@ -186,13 +185,10 @@ export function rowToCommunitySetup(row: unknown): CommunitySetup | null {
     categories: [...new Set(categories)],
     tags: [...new Set(strings(r.tags).filter((tag) => TAG.test(tag)))].slice(0, 8),
     version: version && SEMVER.test(version) ? version : null,
-    releaseNotes: null,
     license: license && SPDX_LIKE.test(license) ? license : null,
     package: {
       format: "zip",
       downloadUrl: githubArchiveUrl(repositoryUrl, branch && isSafeGitBranch(branch) ? branch : null),
-      sizeBytes: null,
-      sha256: null,
     },
     repositoryUrl,
     // Only canonical GitHub repository links survive; the setup’s own repository is not a credit.
@@ -205,7 +201,6 @@ export function rowToCommunitySetup(row: unknown): CommunitySetup | null {
     publishedAt,
     updatedAt: isoDate(r.updated_at) ?? publishedAt,
     downloads: null,
-    featured: false,
   };
 
   return { setup, ownerId, status: r.status === "hidden" ? "hidden" : "published" };
@@ -230,6 +225,18 @@ export async function fetchPublishedSummaries(): Promise<SetupSummary[]> {
     const mapped = rowToCommunitySetup(row);
     return mapped ? [toSummary(mapped.setup)] : [];
   });
+}
+
+/** The most recently published setup, in full, or null when there are none. */
+export async function fetchLatestSetup(): Promise<Setup | null> {
+  const { data, error } = await getSupabaseClient()
+    .from("setups")
+    .select(DETAIL_COLUMNS)
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) fail("The latest setup could not be loaded.");
+  return rowToCommunitySetup(data?.[0])?.setup ?? null;
 }
 
 /** One setup by slug, or null when it does not exist or is not visible to this visitor. */

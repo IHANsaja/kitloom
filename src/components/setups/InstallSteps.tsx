@@ -1,46 +1,26 @@
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import type { DownloadAccess } from "@/lib/packages/access";
-import type { Setup } from "@/types/catalog";
 
 interface InstallStepsProps {
-  setup: Setup;
   access: DownloadAccess;
 }
 
 /**
- * Generic, honest install steps built from the package's real file name and checksum.
- * Package-specific instructions live in the README above.
+ * Generic, honest install steps built from the real download. Anything specific to a
+ * setup lives in its README above.
  */
-export function InstallSteps({ setup, access }: InstallStepsProps) {
+export function InstallSteps({ access }: InstallStepsProps) {
   if (access.kind !== "free") {
-    return (
-      <p className="text-sm text-fg-2">
-        This listing has no downloadable package yet, so there is nothing to install. Check the
-        source repository if one is linked.
-      </p>
-    );
+    return <p className="text-sm text-fg-2">This listing has no working download, so there is nothing to install.</p>;
   }
 
   // GitHub names a HEAD archive at download time, so fall back to a visible placeholder.
   const fileName = access.fileName ?? "<downloaded-file>.zip";
-  const sha = setup.package.sha256;
-  const steps: { title: string; body: string; blocks?: { label: string; code: string }[] }[] = [];
 
-  if (sha) {
-    steps.push({
-      title: "Verify the download",
-      body: "Compute the file's SHA-256 and compare it with the checksum on this page. They must match exactly. A match shows the file is the one that was listed; it says nothing about whether the contents are safe.",
-      blocks: [
-        { label: "macOS / Linux", code: `shasum -a 256 ${fileName}` },
-        { label: "Windows PowerShell", code: `(Get-FileHash ${fileName} -Algorithm SHA256).Hash.ToLower()` },
-      ],
-    });
-  }
-
-  steps.push(
+  const steps: { title: string; body: string; blocks?: { label: string; code: string }[] }[] = [
     {
       title: "Look inside before extracting",
-      body: "List the archive's contents and compare them with the file manifest on this page.",
+      body: "List the archive's contents and compare them with the file list on this page. The ZIP is the whole repository as it is right now, so it may have changed since the list was read.",
       blocks: [
         { label: "macOS / Linux", code: `unzip -l ${fileName}` },
         { label: "Windows PowerShell", code: `tar -tf ${fileName}` },
@@ -48,12 +28,7 @@ export function InstallSteps({ setup, access }: InstallStepsProps) {
     },
     {
       title: "Extract somewhere neutral",
-      body:
-        setup.origin === "first-party"
-          ? `Extract outside your project first. The archive unpacks into a single ${setup.slug}/ folder.`
-          : access.source === "github-archive"
-            ? "Extract outside your project first. A GitHub archive unpacks into a single folder named after the repository and branch, and contains the whole repository, not only the setup files."
-            : "Extract outside your project first, into an empty folder, so nothing is overwritten by accident.",
+      body: "Extract outside your project first. A GitHub archive unpacks into a single folder named after the repository and branch.",
       blocks: [
         { label: "macOS / Linux", code: `unzip ${fileName} -d kitloom-inbox` },
         { label: "Windows PowerShell", code: `Expand-Archive ${fileName} -DestinationPath kitloom-inbox` },
@@ -61,13 +36,13 @@ export function InstallSteps({ setup, access }: InstallStepsProps) {
     },
     {
       title: "Read, then copy what you want",
-      body: "Open each file. Copy the ones you want into your project, merging with folders that already exist rather than replacing them. Follow the README for anything specific to this kit.",
+      body: "Open each file. Copy the ones you want into your project, merging with folders that already exist rather than replacing them. Follow the README for anything specific to this setup.",
     },
     {
       title: "Customise and commit",
       body: "Replace placeholders with facts about your project, remove what does not apply, and commit the result so your team gets the same setup.",
     },
-  );
+  ];
 
   return (
     <ol className="space-y-7">

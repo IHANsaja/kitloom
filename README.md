@@ -17,8 +17,8 @@ npm install
 ```
 
 Copy `.env.example` to `.env.local` and fill in the two Supabase values. Both are public by
-design. Without them the site still runs and shows the starter kits; sign-in and publishing
-are switched off.
+design. Without them the site still runs, but it has no listings and sign-in and
+publishing are switched off.
 
 ```bash
 npm run dev
@@ -27,21 +27,20 @@ npm run dev
 | Command | What it does |
 |---|---|
 | `npm run dev` | Development server on port 3000 |
-| `npm run build` | Builds kit ZIPs, verifies them, exports the static site to `out/` |
+| `npm run build` | Exports the static site to `out/` |
 | `npm run preview` | Serves `out/` locally |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript, strict |
-| `npm test` | Catalog validation, search, filters, sorting, URL safety, row mapping |
-| `npm run packages:sync` | Rewrites kit size/checksum/manifest in the catalog from `packages/` |
+| `npm test` | Search, filters, sorting, URL safety, row mapping, form validation |
 | `npm run check` | All of the above checks plus the build |
 
 ## How it works
 
-- **Starter kits** are maintained here: a record in `src/data/setups.json`, files in
-  `packages/`, zipped deterministically during the build with a verified SHA-256.
-- **Community setups** are published by signed-in users at `/publish` and stored in
-  Supabase. The files stay in the creator's public GitHub repository; Kitloom links to the
-  ZIP GitHub builds from it. Nothing is uploaded.
+- **Every listing comes from the database.** Nothing is built into the site. Signed-in
+  users publish at `/publish`, and rows live in Supabase.
+- **No uploads.** A setup is a public GitHub repository. Kitloom stores a description plus
+  a snapshot of the README and file list, and the Download button fetches the ZIP that
+  GitHub builds from the repository's default branch. Creators update a setup by pushing.
 - **Accounts** use Supabase Auth, passwordless only. The browser talks to Supabase
   directly, so Row Level Security in `supabase/migrations/` is the access control.
 - The site is a static Next.js export for Cloudflare Pages. No server of its own, no
@@ -60,7 +59,5 @@ Kitloom's own source code, design, and branding are proprietary: see `LICENSE`. 
 read the code and fork it to propose changes, but not reuse it or run it as your own
 product without permission.
 
-Two things are licensed separately:
-
-- The starter kits in `packages/` each carry their own MIT `LICENSE`.
-- Setups listed in the directory belong to their creators, under the licence each one states.
+Setups listed in the directory are not covered by that licence: they belong to their
+creators, under the licence each one states.

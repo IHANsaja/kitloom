@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Notice } from "@/components/ui/Notice";
 import { buttonClass } from "@/components/ui/styles";
 import { safeNextPath, useSession } from "@/lib/supabase/auth";
+import { LoadingLine } from "@/components/motion/Strings";
 
 const TIMEOUT_MS = 10_000;
 
@@ -36,9 +37,7 @@ export function AuthCallback() {
 
   if (!failed) {
     return (
-      <p role="status" className="font-mono text-xs text-fg-2">
-        Finishing sign-in…
-      </p>
+      <LoadingLine>Finishing sign-in…</LoadingLine>
     );
   }
 

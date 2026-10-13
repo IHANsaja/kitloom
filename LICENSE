@@ -28,14 +28,11 @@ Without prior written permission from the copyright holder, you may not:
 
 4. Material under other terms
 
-  a. Starter kits. Each directory under packages/ is licensed separately under the
-     LICENSE file it contains (MIT at the time of writing). Those terms, not this
-     licence, govern those files and the ZIP archives built from them.
-  b. Listed setups. Setups listed in the catalog belong to their creators and are
+  a. Listed setups. Setups listed in the catalog belong to their creators and are
      governed by the licence each creator states. Kitloom claims no ownership of them.
      Catalog metadata describing a setup (name, description, README text) is supplied by
      its creator and reproduced with their permission for the purpose of listing it.
-  c. Third-party software. Dependencies remain under their own licences.
+  b. Third-party software. Dependencies remain under their own licences.
 
 5. Contributions
 

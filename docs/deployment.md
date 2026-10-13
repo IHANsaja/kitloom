@@ -21,14 +21,9 @@ from a Supabase project that the browser talks to directly. There is no server o
 | Response headers | `public/_headers` (copied to `out/_headers`) |
 | Not-found page | `out/404.html`, served by Pages for unknown paths |
 
-**Use `npm run build`, not `npx next build`.** The `prebuild` script
-(`scripts/packages.mjs`) zips the starter kits in `packages/` into `public/packages/` and
-verifies their size and SHA-256 against the catalog. Running `next build` directly skips
-that step and ships a site whose Download buttons return 404.
-
 **The two environment variables are baked in at build time.** They must be set in
 Cloudflare before the build runs; changing them later needs a redeploy. Without them the
-site still builds and lists the starter kits, but sign-in and publishing are disabled.
+site still builds, but it has no listings at all and sign-in and publishing are disabled.
 
 Never add a Supabase secret or service-role key to this project's environment. It is a
 static site, so build-time values can end up in public JavaScript.
@@ -93,7 +88,7 @@ The source is at https://github.com/IHANsaja/kitloom (public, default branch `ma
    |---|---|
    | Production branch | `main` |
    | Framework preset | `Next.js (Static HTML Export)` |
-   | Build command | `npm run build` (replace the preset's default `npx next build`) |
+   | Build command | `npm run build` |
    | Build output directory | `out` |
    | Root directory | leave empty |
 
@@ -106,8 +101,7 @@ The source is at https://github.com/IHANsaja/kitloom (public, default branch `ma
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the `sb_publishable_…` key |
 
    If the build picks an older Node.js despite `.node-version`, also add `NODE_VERSION` = `22`.
-5. Save and deploy. Check the build log for `4 kits verified.` followed by the Next.js
-   route table.
+5. Save and deploy. Check the build log for the Next.js route table.
 
 Every push to `main` then redeploys production, and every pull request gets a preview URL.
 
@@ -116,9 +110,9 @@ Every push to `main` then redeploys production, and every pull request gets a pr
 On the `*.pages.dev` URL, check:
 
 - `/`, `/explore`, `/publish`, `/about` load.
-- `/setups/review-pass` loads, and **Download ZIP** downloads a file whose SHA-256 matches
-  the checksum on the page.
-- `/setups/does-not-exist` returns the Kitloom 404 page with status 404.
+- `/explore` lists the setups in the database, and opening one shows its README and files.
+- **Download ZIP** on a setup downloads `<repo>-<branch>.zip` from github.com.
+- `/does-not-exist` returns the Kitloom 404 page with status 404.
 - `/explore?agent=cursor` opens with the Cursor filter selected.
 - `/signin` shows the sign-in methods you enabled, and signing in lands on `/account`.
 - Publishing a test setup from `/publish` shows it at `/setup?slug=…` and in `/explore`,

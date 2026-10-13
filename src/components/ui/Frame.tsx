@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cx } from "@/components/ui/styles";
+import { ThreadTick } from "@/components/motion/Ambient";
 
 /**
  * The ruled sheet. Every band of the page is a full-width hairline row whose content sits
@@ -45,7 +46,10 @@ export function SectionHeader({ id, eyebrow, title, children, action }: SectionH
   return (
     <div className="cell-x flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b border-line py-6">
       <div className="max-w-[60ch]">
-        <p className="eyebrow text-fg-3">{eyebrow}</p>
+        <p className="eyebrow flex items-center gap-3 text-fg-3">
+          {eyebrow}
+          <ThreadTick />
+        </p>
         <h2 id={id} className="mt-2 text-h2 text-balance">
           {title}
         </h2>

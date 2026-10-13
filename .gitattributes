@@ -1,4 +1,3 @@
-# Kit checksums are computed from file bytes, so line endings must be identical everywhere.
 * text=auto eol=lf
 *.zip binary
 *.png binary

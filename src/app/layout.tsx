@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { Gutters } from "@/components/motion/Strings";
 import { Toaster } from "@/components/ui/Toaster";
 import { site } from "@/lib/site";
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
+        <Gutters />
         <SiteHeader />
         <main id="main" tabIndex={-1} className="flex-1 outline-none">
           {children}

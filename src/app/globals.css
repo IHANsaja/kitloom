@@ -148,6 +148,15 @@
   }
 }
 
+/* Animated illustrations fade in once GSAP has set their first frame. Same guarantees:
+   only hidden when scripts run and motion is welcome, and revealed regardless after 3s. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js svg[data-motion] {
+    opacity: 0;
+    animation: kit-reveal-fallback 1ms linear 3s forwards;
+  }
+}
+
 @keyframes kit-reveal-fallback {
   to {
     opacity: 1;

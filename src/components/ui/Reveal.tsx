@@ -5,6 +5,8 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+import { keepScrollTriggersFresh } from "@/components/motion/useSvgMotion";
+
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 export const MOTION_OK = "(prefers-reduced-motion: no-preference)";
@@ -56,6 +58,7 @@ export function Reveal({ children, className, mode = "scroll", spread = 0.4 }: R
           clearProps: "transform",
           scrollTrigger: { trigger: element, start: "top 88%", once: true },
         });
+        keepScrollTriggersFresh();
       });
     },
     { scope: ref },

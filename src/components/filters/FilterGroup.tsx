@@ -14,17 +14,20 @@ interface FilterGroupProps<T extends string> {
   options: readonly FilterOption<T>[];
   selected: T | null;
   onSelect: (id: T | null) => void;
+  /** True until the listings have loaded: counts show a dash instead of a zero. */
+  pending?: boolean;
 }
 
 interface RowProps {
   label: string;
   count: number;
   pressed: boolean;
+  pending: boolean;
   hint?: string;
   onClick: () => void;
 }
 
-function Row({ label, count, pressed, hint, onClick }: RowProps) {
+function Row({ label, count, pressed, pending, hint, onClick }: RowProps) {
   return (
     <li>
       <button
@@ -39,8 +42,8 @@ function Row({ label, count, pressed, hint, onClick }: RowProps) {
       >
         <span>{label}</span>
         <span className={cx("font-mono text-xs tabular-nums", pressed ? "text-fg" : "text-fg-2")}>
-          {count}
-          <span className="sr-only"> {count === 1 ? "setup" : "setups"}</span>
+          {pending ? <span aria-hidden="true">—</span> : count}
+          <span className="sr-only">{pending ? "Loading count" : count === 1 ? " setup" : " setups"}</span>
         </span>
       </button>
     </li>
@@ -48,17 +51,18 @@ function Row({ label, count, pressed, hint, onClick }: RowProps) {
 }
 
 /** IDE-sidebar style single-select filter. Counts are computed, never hand-written. */
-export function FilterGroup<T extends string>({ legend, allLabel, allCount, options, selected, onSelect }: FilterGroupProps<T>) {
+export function FilterGroup<T extends string>({ legend, allLabel, allCount, options, selected, onSelect, pending = false }: FilterGroupProps<T>) {
   return (
     <fieldset className="border-b border-line py-4">
       <legend className="eyebrow cell-x float-left mb-2 w-full text-fg-3 lg:text-fg-3">{legend}</legend>
       <ul className="clear-both">
-        <Row label={allLabel} count={allCount} pressed={selected === null} onClick={() => onSelect(null)} />
+        <Row label={allLabel} count={allCount} pending={pending} pressed={selected === null} onClick={() => onSelect(null)} />
         {options.map((option) => (
           <Row
             key={option.id}
             label={option.label}
             count={option.count}
+            pending={pending}
             hint={option.hint}
             pressed={selected === option.id}
             onClick={() => onSelect(selected === option.id ? null : option.id)}

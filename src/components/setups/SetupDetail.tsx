@@ -6,7 +6,6 @@ import { ReadmePreview } from "@/components/files/ReadmePreview";
 import { totalBytes } from "@/components/files/tree";
 import { DownloadButton } from "@/components/setups/DownloadButton";
 import { InstallSteps } from "@/components/setups/InstallSteps";
-import { CopyButton } from "@/components/ui/CopyButton";
 import { Band } from "@/components/ui/Frame";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
@@ -18,6 +17,7 @@ import { getDownloadAccess } from "@/lib/packages/access";
 import { gitHubRepoLabel } from "@/lib/packages/urls";
 import { describeContents } from "@/lib/packages/contents";
 import type { Setup } from "@/types/catalog";
+import { KitUnfold } from "@/components/motion/Illustrations";
 
 const NOT_PROVIDED = <span className="text-fg-2">Not provided</span>;
 
@@ -51,8 +51,7 @@ interface SetupDetailProps {
 }
 
 /**
- * The full listing page body. It has no server-only dependencies, so the same component
- * renders pre-built first-party kits and community setups fetched in the browser.
+ * The full listing page body, rendered in the browser once a setup has been fetched.
  */
 export function SetupDetail({ setup, banner }: SetupDetailProps) {
   const access = getDownloadAccess(setup);
@@ -61,13 +60,12 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
   const manifestBytes = totalBytes(setup.manifest);
   const anyTested = setup.agents.some((agent) => agent.compatibility === "tested");
 
-  const isArchive = access.kind === "free" && access.source === "github-archive";
-
   return (
     <>
       {banner}
       <Band as="div">
-        <Reveal mode="load" className="cell-x py-8 lg:py-10">
+        <Reveal mode="load" className="cell-x relative py-8 lg:py-10">
+          <KitUnfold className="pointer-events-none absolute top-8 right-10 hidden h-[110px] w-auto lg:block" />
           <nav aria-label="Breadcrumb" data-reveal-item>
             <ol className="flex flex-wrap items-center gap-2 font-mono text-xs text-fg-2">
               <li>
@@ -123,20 +121,15 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
               <div className="cell-x border-b border-line py-6 lg:px-6">
                 {access.kind === "free" ? (
                   <>
-                    <DownloadButton url={access.url} fileName={access.fileName} external={access.external} sha256={setup.package.sha256} />
+                    <DownloadButton url={access.url} />
                     <p className="mt-3 font-mono text-xs break-all text-fg-2">
                       {access.fileName ?? "ZIP named by GitHub"}
-                      {setup.package.sizeBytes !== null ? ` · ${formatBytes(setup.package.sizeBytes)}` : ""}
                       {" · Free"}
                     </p>
-                    {access.source === "github-archive" ? (
-                      <p className="mt-1.5 text-xs leading-relaxed text-fg-2">
-                        GitHub builds this ZIP from the creator&apos;s repository when you click, so you always
-                        get the repository as it is now. The link leaves kitloom.site.
-                      </p>
-                    ) : access.external ? (
-                      <p className="mt-1.5 text-xs text-fg-2">Hosted by the creator on GitHub Releases. The link leaves kitloom.site.</p>
-                    ) : null}
+                    <p className="mt-1.5 text-xs leading-relaxed text-fg-2">
+                      GitHub builds this ZIP from the creator&apos;s repository when you click, so you always
+                      get the repository as it is now. The download comes from github.com.
+                    </p>
                   </>
                 ) : (
                   <Notice tone="danger" label="No download available">
@@ -146,29 +139,16 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
               </div>
 
               <div className="cell-x border-b border-line py-5 lg:px-6">
-                <h2 className="eyebrow text-fg-3">SHA-256 checksum</h2>
-                {setup.package.sha256 ? (
-                  <>
-                    <p className="mt-2.5 rounded-xs border border-line bg-surface px-3 py-2 font-mono text-xs leading-relaxed break-all text-fg">
-                      {setup.package.sha256}
-                    </p>
-                    <div className="mt-2.5 flex items-start justify-between gap-3">
-                      <p className="text-xs leading-relaxed text-fg-2">
-                        {setup.origin === "first-party"
-                          ? "Computed from the built file at deploy time. "
-                          : "Provided by the creator. "}
-                        Proves integrity, not safety.
-                      </p>
-                      <CopyButton value={setup.package.sha256} label="Copy" subject="Checksum" />
-                    </div>
-                  </>
-                ) : (
-                  <p className="mt-2 text-sm leading-relaxed text-fg-2">
-                    {isArchive
-                      ? "None. The ZIP is generated from the repository's current branch, so its contents change whenever the repository does and there is no fixed value to compare against. Review the repository and its commit history instead."
-                      : "Not provided. This download cannot be verified against a known value."}
-                  </p>
-                )}
+                <h2 className="eyebrow text-fg-3">Source repository</h2>
+                <a href={setup.repositoryUrl} rel="noopener noreferrer nofollow" className="link mt-2.5 inline-flex max-w-full items-baseline gap-1.5 font-mono text-code break-all">
+                  {gitHubRepoLabel(setup.repositoryUrl)}
+                  <Icon name="arrow-up-right" size={12} className="shrink-0 self-center text-fg-2" />
+                </a>
+                <p className="mt-2.5 text-xs leading-relaxed text-fg-2">
+                  There is no checksum to verify: the ZIP follows the repository, so it changes
+                  whenever the creator pushes. The repository&apos;s commit history is the record of what
+                  changed and when.
+                </p>
               </div>
 
               <div className="cell-x border-b border-line py-5 lg:px-6">
@@ -211,12 +191,8 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                       setup.creator.name
                     )}
                   </Row>
-                  <Row term="origin">{setup.origin === "first-party" ? "Kitloom starter kit" : "Community"}</Row>
                   <Row term="format">
                     <span className="font-mono text-code uppercase">{setup.package.format}</span>
-                  </Row>
-                  <Row term="size">
-                    {setup.package.sizeBytes !== null ? <span className="font-mono text-code tabular-nums">{formatBytes(setup.package.sizeBytes)}</span> : NOT_PROVIDED}
                   </Row>
                   <Row term="published">
                     <time dateTime={setup.publishedAt} className="font-mono text-code tabular-nums">
@@ -227,15 +203,6 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                     <time dateTime={setup.updatedAt} className="font-mono text-code tabular-nums">
                       {formatDate(setup.updatedAt)}
                     </time>
-                  </Row>
-                  <Row term="source">
-                    {setup.repositoryUrl ? (
-                      <a href={setup.repositoryUrl} rel="noopener noreferrer nofollow" className="link break-all">
-                        {new URL(setup.repositoryUrl).host + new URL(setup.repositoryUrl).pathname}
-                      </a>
-                    ) : (
-                      NOT_PROVIDED
-                    )}
                   </Row>
                 </dl>
               </div>
@@ -264,8 +231,8 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                 <Notice tone="warning" label="Inspect before you use it">
                   <p>
                     Agent setups can contain instructions, hooks, and tool configuration that make an
-                    agent run commands on your machine. Read every file first. Kitloom reviews
-                    listings by hand and does not scan or execute package contents.
+                    agent run commands on your machine. Read every file first. Listings are published
+                    by their creators without review, and Kitloom does not scan or execute their contents.
                   </p>
                 </Notice>
               </div>
@@ -278,8 +245,8 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                 <ReadmePreview markdown={setup.readme} />
               ) : (
                 <p className="text-sm text-fg-2">
-                  The creator did not provide a README for this listing.
-                  {setup.repositoryUrl ? " The source repository may have more detail." : ""}
+                  This repository had no README when the listing was last updated. Browse the source
+                  repository to see what it contains.
                 </p>
               )}
             </Section>
@@ -296,14 +263,12 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
               {setup.manifest.length > 0 ? (
                 <>
                   <div className="rounded-sm border border-line px-4 py-4">
-                    <FileTree rootName={setup.slug} manifest={setup.manifest} />
+                    <FileTree rootName={gitHubRepoLabel(setup.repositoryUrl).split("/")[1] ?? setup.slug} manifest={setup.manifest} />
                   </div>
-                  {isArchive ? (
-                    <p className="mt-3 text-sm text-fg-2">
-                      This list was read from the repository on {formatDate(setup.updatedAt)}. The
-                      repository may have changed since; the ZIP always contains its current files.
-                    </p>
-                  ) : null}
+                  <p className="mt-3 text-sm text-fg-2">
+                    This list was read from the repository on {formatDate(setup.updatedAt)}. The
+                    repository may have changed since; the ZIP always contains its current files.
+                  </p>
 
                   <h3 className="mt-7 font-semibold">What these files do</h3>
                   <p className="mt-1 text-sm text-fg-2">Worked out from file paths alone. It is a reading aid, not a security scan.</p>
@@ -335,22 +300,14 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                 </>
               ) : (
                 <p className="text-sm text-fg-2">
-                  No file manifest was provided for this listing. Open the ZIP and review its contents
-                  before copying anything into a project.
+                  The file list could not be read when this listing was last updated. Open the ZIP and
+                  review its contents before copying anything into a project.
                 </p>
               )}
             </Section>
 
             <Section id="install-title" title="Install">
-              <InstallSteps setup={setup} access={access} />
-            </Section>
-
-            <Section id="release-title" title="Release notes" meta={setup.version ? `v${setup.version}` : undefined}>
-              {setup.releaseNotes ? (
-                <p className="max-w-[68ch] text-sm leading-relaxed whitespace-pre-line text-fg-2">{setup.releaseNotes}</p>
-              ) : (
-                <p className="text-sm text-fg-2">No release notes were provided for this version.</p>
-              )}
+              <InstallSteps access={access} />
             </Section>
           </div>
         </div>

@@ -12,7 +12,8 @@ function Node({ node }: { node: TreeNode }) {
           <span className="whitespace-nowrap">{node.name}</span>
         </span>
         {node.sizeBytes !== null ? (
-          <span className="shrink-0 text-xs whitespace-nowrap text-fg-2 tabular-nums">{formatBytes(node.sizeBytes)}</span>
+          // Pinned to the right edge so sizes stay visible when long paths make the tree scroll.
+          <span className="sticky right-0 shrink-0 bg-carbon pl-3 text-xs whitespace-nowrap text-fg-2 tabular-nums">{formatBytes(node.sizeBytes)}</span>
         ) : null}
       </li>
     );

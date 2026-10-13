@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Band } from "@/components/ui/Frame";
 import { buttonClass } from "@/components/ui/styles";
 import { AGENTS } from "@/lib/catalog/taxonomy";
+import { ScrollThread } from "@/components/motion/Ambient";
+import { KitOrbit } from "@/components/motion/Scenes";
 
 export const metadata: Metadata = {
   title: "About",
@@ -85,8 +87,8 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
           <li>Read every file before copying it into a project. The listing shows the full file list.</li>
           <li>Extract into an empty folder first, never straight into a repository.</li>
           <li>
-            Compare the SHA-256 when one is shown. A match proves you received the listed file.
-            It does not prove the file is safe.
+            There is no checksum to compare. The ZIP is built from the repository as it is at
+            that moment, so look at the repository and its commit history on GitHub.
           </li>
           <li>Being hosted on GitHub, or listed here, does not make a package trusted.</li>
         </ul>
@@ -148,8 +150,7 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
         </p>
         <p>
           Because that ZIP follows the repository, it has no fixed checksum; the repository&apos;s
-          commit history is the record of what changed. Kitloom&apos;s own starter kits are built
-          with the site and do carry a checksum. Kitloom does not show download counts, because
+          commit history is the record of what changed. Kitloom does not show download counts, because
           it has no trustworthy way to count them.
         </p>
       </>
@@ -161,15 +162,20 @@ export default function AboutPage() {
   return (
     <>
       <Band as="div">
-        <div className="cell-x py-10 lg:py-14">
-          <p className="eyebrow text-fg-3">About</p>
-          <h1 className="mt-2 max-w-[22ch] text-h1 text-balance">A plain directory for agent setups</h1>
+        <div className="cell-x flex items-center justify-between gap-10 py-10 lg:py-14">
+          <div>
+            <p className="eyebrow text-fg-3">About</p>
+            <h1 className="mt-2 max-w-[22ch] text-h1 text-balance">A plain directory for agent setups</h1>
+          </div>
+          <KitOrbit className="hidden md:block" />
         </div>
       </Band>
       <Band as="div">
         <div className="lg:grid lg:grid-cols-12">
           <nav aria-label="On this page" className="cell-x border-b border-line py-6 lg:col-span-3 lg:border-r lg:border-b-0">
-            <ol className="space-y-2 lg:sticky lg:top-24">
+            <div className="lg:sticky lg:top-24 lg:flex lg:gap-4">
+            <ScrollThread target="#about-content" className="hidden shrink-0 lg:block" />
+            <ol className="space-y-2">
               {SECTIONS.map((section, index) => (
                 <li key={section.id}>
                   <a href={`#${section.id}`} className="group flex items-baseline gap-3 text-sm text-fg-2 transition-colors duration-150 hover:text-fg">
@@ -179,8 +185,9 @@ export default function AboutPage() {
                 </li>
               ))}
             </ol>
+            </div>
           </nav>
-          <div className="lg:col-span-9">
+          <div id="about-content" className="lg:col-span-9">
             {SECTIONS.map((section) => (
               <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className="cell-x border-b border-line-subtle py-9 last:border-b-0 lg:px-10">
                 <h2 id={`${section.id}-title`} className="text-h2">

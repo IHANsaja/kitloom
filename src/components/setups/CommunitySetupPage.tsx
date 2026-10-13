@@ -12,13 +12,13 @@ import { fetchCommunitySetup, type CommunitySetup } from "@/lib/community/setups
 import { useSession } from "@/lib/supabase/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { site } from "@/lib/site";
+import { LoadingLine } from "@/components/motion/Strings";
 
 type State = { kind: "loading" } | { kind: "ready"; data: CommunitySetup } | { kind: "missing" } | { kind: "error" };
 
 /**
- * Community setups live in the database, which a static export cannot pre-render, so this
- * page fetches one by `?slug=` in the browser and renders the same detail view as a
- * first-party kit.
+ * Setups live in the database, which a static export cannot pre-render, so this page
+ * fetches one by `?slug=` in the browser and renders its detail view.
  */
 export function CommunitySetupPage() {
   const slug = useSearchParams().get("slug") ?? "";
@@ -84,9 +84,7 @@ export function CommunitySetupPage() {
     return (
       <Band as="div">
         <div className="cell-x py-20">
-          <p role="status" className="font-mono text-xs text-fg-2">
-            Loading setup…
-          </p>
+          <LoadingLine>Loading setup…</LoadingLine>
         </div>
       </Band>
     );

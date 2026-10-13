@@ -1,12 +1,10 @@
 import type { Setup, SetupSummary } from "@/types/catalog";
 
-/** Pure and dependency-free: used at build time and in the browser. */
 export function toSummary(setup: Setup): SetupSummary {
   return {
     slug: setup.slug,
     name: setup.name,
     description: setup.description,
-    origin: setup.origin,
     creatorName: setup.creator.name,
     agents: setup.agents.map((agent) => agent.id),
     categories: setup.categories,
@@ -17,16 +15,13 @@ export function toSummary(setup: Setup): SetupSummary {
     publishedAt: setup.publishedAt,
     updatedAt: setup.updatedAt,
     downloads: setup.downloads,
-    featured: setup.featured,
   };
 }
 
 /**
- * First-party kits are pre-rendered at /setups/<slug>. Community setups live in the
- * database, which a static export cannot pre-render, so they use /setup?slug=<slug>.
+ * Setups live in the database, and a static export cannot pre-render a page per row, so a
+ * setup's address carries its slug in the query string.
  */
-export function setupHref(setup: Pick<SetupSummary, "slug" | "origin">): string {
-  return setup.origin === "community"
-    ? `/setup?slug=${encodeURIComponent(setup.slug)}`
-    : `/setups/${setup.slug}`;
+export function setupHref(slug: string): string {
+  return `/setup?slug=${encodeURIComponent(slug)}`;
 }

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { SignInPanel } from "@/components/auth/SignInPanel";
 import { Band } from "@/components/ui/Frame";
+import { Latch } from "@/components/motion/Illustrations";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -16,6 +17,7 @@ export default function SignInPage() {
     <Band as="div">
       <div className="lg:grid lg:grid-cols-12">
         <div className="cell-x py-10 lg:col-span-7 lg:py-16">
+          <Latch className="mb-6 h-[96px] w-auto" />
           <p className="eyebrow text-fg-3">Account</p>
           <h1 className="mt-2 text-h1 text-balance">Sign in to publish</h1>
           <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-relaxed text-fg-2 text-pretty">

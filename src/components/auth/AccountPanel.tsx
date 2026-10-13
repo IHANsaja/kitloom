@@ -10,10 +10,12 @@ import { Notice } from "@/components/ui/Notice";
 import { buttonClass } from "@/components/ui/styles";
 import { setupHref } from "@/lib/catalog/summary";
 import { deleteSetup, fetchOwnSetups, type CommunitySetup } from "@/lib/community/setups";
-import { invalidateCommunitySetups } from "@/lib/community/useAllSetups";
+import { invalidateSetups } from "@/lib/community/useSetups";
 import { formatDate, pluralize } from "@/lib/format";
 import { useSession } from "@/lib/supabase/auth";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { LoadingLine } from "@/components/motion/Strings";
+import { Spool } from "@/components/motion/Illustrations";
 
 type ListState = CommunitySetup[] | "loading" | "error";
 
@@ -63,9 +65,7 @@ export function AccountPanel() {
   if (session === "loading" || session === null) {
     return (
       <div className="cell-x py-16">
-        <p role="status" className="font-mono text-xs text-fg-2">
-          {session === null ? "Redirecting to sign in…" : "Loading your account…"}
-        </p>
+        <LoadingLine>{session === null ? "Redirecting to sign in…" : "Loading your account…"}</LoadingLine>
       </div>
     );
   }
@@ -76,7 +76,7 @@ export function AccountPanel() {
       toast.error("Sign-out failed", { description: "Try again." });
       return;
     }
-    invalidateCommunitySetups();
+    invalidateSetups();
     toast.success("Signed out");
     router.replace("/");
   }
@@ -85,7 +85,7 @@ export function AccountPanel() {
     setDeleting(slug);
     try {
       await deleteSetup(slug);
-      invalidateCommunitySetups();
+      invalidateSetups();
       setSetups((current) => (Array.isArray(current) ? current.filter((item) => item.setup.slug !== slug) : current));
       toast.success("Setup deleted", { description: slug });
     } catch (error) {
@@ -99,7 +99,8 @@ export function AccountPanel() {
   return (
     <>
       <div className="cell-x flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-b border-line py-8">
-        <div className="min-w-0">
+        <Spool className="hidden h-[84px] w-auto shrink-0 self-center sm:block" />
+        <div className="min-w-0 flex-1">
           <p className="eyebrow text-fg-3">Account</p>
           <h1 className="mt-2 text-h1 break-words">{displayName ?? "Your account"}</h1>
           <p className="mt-2 text-sm text-fg-2">
@@ -126,9 +127,7 @@ export function AccountPanel() {
         </div>
 
         {setups === "loading" ? (
-          <p role="status" className="cell-x py-10 font-mono text-xs text-fg-2">
-            Loading your setups…
-          </p>
+          <LoadingLine className="cell-x py-10">Loading your setups…</LoadingLine>
         ) : setups === "error" ? (
           <div className="cell-x py-8">
             <Notice tone="danger" label="Could not load">
@@ -153,7 +152,7 @@ export function AccountPanel() {
               <li key={setup.slug} className="cell-x flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-b border-line-subtle py-4 last:border-b-0">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <Link href={setupHref(setup)} className="link font-semibold break-words">
+                    <Link href={setupHref(setup.slug)} className="link font-semibold break-words">
                       {setup.name}
                     </Link>
                     {status === "hidden" ? <span className="font-mono text-xs text-warning">hidden by a maintainer</span> : null}

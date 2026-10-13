@@ -3,9 +3,11 @@ import Link from "next/link";
 import { Frame } from "@/components/ui/Frame";
 import { LogoMark } from "@/components/ui/Icon";
 import { repositoryLinks, site } from "@/lib/site";
+import { WeftWave } from "@/components/motion/Ambient";
 
 const LINKS = [
   { href: "/explore", label: "Explore" },
+  { href: "/agents", label: "Agents" },
   { href: "/publish", label: "Publish" },
   { href: "/about", label: "About" },
   { href: "/about#security", label: "Security" },
@@ -15,6 +17,7 @@ export function SiteFooter() {
   const repo = repositoryLinks();
   return (
     <footer>
+      <WeftWave />
       <Frame>
         <div className="cell-x flex flex-col gap-8 py-10 md:flex-row md:items-start md:justify-between">
           <div className="max-w-[44ch]">

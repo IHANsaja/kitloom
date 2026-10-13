@@ -13,7 +13,7 @@ import { useSession } from "@/lib/supabase/auth";
 
 const LINKS = [
   { href: "/explore", label: "Explore", match: (path: string) => path.startsWith("/explore") || path.startsWith("/setups") },
-  { href: "/#agents", label: "Agents", match: () => false },
+  { href: "/agents", label: "Agents", match: (path: string) => path.startsWith("/agents") },
   { href: "/about", label: "About", match: (path: string) => path.startsWith("/about") },
 ] as const;
 

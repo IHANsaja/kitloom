@@ -27,9 +27,9 @@ import {
   type SetupQuery,
 } from "@/lib/catalog/query";
 import { AGENT_FILTERS, CATEGORIES } from "@/lib/catalog/taxonomy";
-import { useAllSetups } from "@/lib/community/useAllSetups";
+import { useSetups } from "@/lib/community/useSetups";
 import { pluralize } from "@/lib/format";
-import type { SetupSummary } from "@/types/catalog";
+import { LoadingLine } from "@/components/motion/Strings";
 
 const ANIMATED_CELLS = 12;
 
@@ -37,9 +37,8 @@ const ANIMATED_CELLS = 12;
  * Search, filters, and sorting over the catalog, entirely in the browser (the site is a
  * static export). State is mirrored into the URL so every view can be shared or bookmarked.
  */
-export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSummary[] }) {
-  // Starter kits are pre-rendered; community setups join the list when the database answers.
-  const { setups, community } = useAllSetups(builtIn);
+export function ExploreClient() {
+  const { setups, state } = useSetups();
   const pathname = usePathname();
   const params = useSearchParams();
   const urlKey = new URLSearchParams(params.toString()).toString();
@@ -149,6 +148,7 @@ export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSumma
             options={AGENT_FILTERS.map((f) => ({ id: f.id, label: f.label, hint: f.hint, count: facets.agents[f.id] }))}
             selected={query.agent}
             onSelect={(agent) => update({ agent })}
+            pending={state !== "ready"}
           />
           <FilterGroup
             legend="Category"
@@ -157,6 +157,7 @@ export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSumma
             options={CATEGORIES.map((c) => ({ id: c.id, label: c.label, hint: c.description, count: facets.categories[c.id] }))}
             selected={query.category}
             onSelect={(category) => update({ category })}
+            pending={state !== "ready"}
           />
           {filtered ? (
             <div className="cell-x py-4">
@@ -176,7 +177,7 @@ export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSumma
 
         <div className="cell-x flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-line py-3 lg:px-6">
           <p role="status" aria-live="polite" className="font-mono text-xs text-fg-2 tabular-nums">
-            <span className="text-fg">{pluralize(matches.length, "setup")}</span>
+            <span className="text-fg">{state === "ready" ? pluralize(matches.length, "setup") : state === "loading" ? "Loading…" : "Unavailable"}</span>
             {filtered ? ` of ${setups.length}` : ""}
             {terms.length > 0 ? <> matching “{terms.join(" ")}”</> : null}
             {agentLabel ? <> · {agentLabel}</> : null}
@@ -185,16 +186,18 @@ export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSumma
           <SortSelect value={sort} options={sorts} onChange={(next) => update({ sort: next })} />
         </div>
 
-        {community === "error" ? (
-          <div className="cell-x border-b border-line py-3 lg:px-6">
-            <Notice tone="warning" label="Community setups unavailable">
-              The database did not respond, so only Kitloom&apos;s starter kits are listed. Reload to try again.
-            </Notice>
-          </div>
-        ) : null}
-
-        <div ref={results} aria-busy={community === "loading"}>
-          {matches.length > 0 ? (
+        <div ref={results} aria-busy={state === "loading"}>
+          {state === "loading" ? (
+            <LoadingLine className="cell-x py-14 lg:px-6">Loading setups…</LoadingLine>
+          ) : state === "error" || state === "off" ? (
+            <div className="cell-x py-8 lg:px-6">
+              <Notice tone={state === "off" ? "warning" : "danger"} label={state === "off" ? "Directory not connected" : "Could not load setups"}>
+                {state === "off"
+                  ? "This build has no database configured, so there are no listings to show."
+                  : "The database did not respond. Reload the page to try again."}
+              </Notice>
+            </div>
+          ) : matches.length > 0 ? (
             <SetupGrid setups={matches} layout="beside-sidebar" />
           ) : setups.length === 0 ? (
             <EmptyState
@@ -206,7 +209,7 @@ export function ExploreClient({ setups: builtIn }: { setups: readonly SetupSumma
                 </Link>
               }
             >
-              The catalog is empty. Listings appear here once a real setup is submitted and reviewed.
+              The directory is empty. Listings appear here as soon as someone publishes a setup.
             </EmptyState>
           ) : (
             <EmptyState

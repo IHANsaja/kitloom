@@ -102,7 +102,6 @@ describe("database rows", () => {
     const setup = mapped!.setup;
     expect(setup).toMatchObject({
       slug: "my-kit",
-      origin: "community",
       creator: { name: "octo", url: "https://github.com/octo" },
       license: "MIT",
       version: "1.2.0",
@@ -110,17 +109,19 @@ describe("database rows", () => {
       sourceRepositories: ["https://github.com/anthropics/skills", "https://github.com/octo/other"],
       publishedAt: "2026-10-13T08:13:12.665Z",
       downloads: null,
-      featured: false,
     });
     expect(setup.package).toEqual({
       format: "zip",
       downloadUrl: "https://github.com/octo/my-kit/archive/refs/heads/main.zip",
-      sizeBytes: null,
-      sha256: null,
     });
     expect(setup.agents.every((agent) => agent.compatibility === "declared")).toBe(true);
-    expect(getDownloadAccess(setup)).toMatchObject({ kind: "free", source: "github-archive", external: true, fileName: "my-kit-main.zip" });
-    expect(setupHref(toSummary(setup))).toBe("/setup?slug=my-kit");
+    expect(getDownloadAccess(setup)).toEqual({
+      kind: "free",
+      url: "https://github.com/octo/my-kit/archive/refs/heads/main.zip",
+      fileName: "my-kit-main.zip",
+    });
+    expect(toSummary(setup)).not.toHaveProperty("readme");
+    expect(setupHref(setup.slug)).toBe("/setup?slug=my-kit");
   });
 
   it.each([

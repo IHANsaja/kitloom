@@ -18,14 +18,13 @@ export const site = {
   repositoryDefaultBranch: "main",
 } as const;
 
-export function repositoryLinks(): { home: string; contributing: string; catalog: string; newIssue: string } | null {
+export function repositoryLinks(): { home: string; contributing: string; newIssue: string } | null {
   const repo = site.repositoryUrl;
   if (repo === null) return null;
   const branch = site.repositoryDefaultBranch;
   return {
     home: repo,
     contributing: `${repo}/blob/${branch}/CONTRIBUTING.md`,
-    catalog: `${repo}/blob/${branch}/src/data/setups.json`,
     newIssue: `${repo}/issues/new`,
   };
 }

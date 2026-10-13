@@ -34,7 +34,7 @@ README and file list; the download is always the current state of your repositor
 - If you built on other people's repositories, credit them under "Built from" (up to 8
   GitHub links). They appear on your page as links; they are not included in the download.
   Crediting a repository does not replace following its licence.
-- There is no checksum for a community setup, because the ZIP follows your repository.
+- There is no checksum, because the ZIP follows your repository.
 - Edit or delete a listing from `/account`. Editing re-reads the README and file list.
 - The URL name cannot be changed after publishing.
 - An account can list up to 25 setups.
@@ -71,18 +71,6 @@ Every change to tables or policies is a migration in `supabase/migrations/` with
 boundary: run `supabase/tests/rls.sql` after any change and include its output in the pull
 request. If you add an agent or category, change `src/lib/catalog/taxonomy.ts` and the
 check constraints on `public.setups` together.
-
-### First-party starter kits
-
-Kits under `packages/` are zipped at build time. After changing a kit's files, bump its
-`version` in `src/data/setups.json` and run:
-
-```bash
-npm run packages:sync
-```
-
-That writes the real size, SHA-256, manifest, and README into the catalog. The build fails
-if the catalog and the built ZIP ever disagree.
 
 ## Reporting a problem with a listing
 

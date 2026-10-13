@@ -21,7 +21,7 @@ import {
   type SetupInput,
   type SetupInputErrors,
 } from "@/lib/community/setups";
-import { invalidateCommunitySetups } from "@/lib/community/useAllSetups";
+import { invalidateSetups } from "@/lib/community/useSetups";
 import { pluralize } from "@/lib/format";
 import { MAX_SOURCE_REPOSITORIES, parseGitHubRepoList, parseGitHubRepoUrl } from "@/lib/packages/urls";
 import { useSession } from "@/lib/supabase/auth";
@@ -300,9 +300,9 @@ export function PublishForm() {
       if (editing) await updateSetup(final.slug, final, snapshot);
       else await createSetup(final, snapshot);
 
-      invalidateCommunitySetups();
+      invalidateSetups();
       toast.success(editing ? "Setup updated" : "Setup published", { description: final.name });
-      router.push(setupHref({ slug: final.slug, origin: "community" }));
+      router.push(setupHref(final.slug));
     } catch (error) {
       const message = error instanceof Error ? error.message : "The setup could not be saved. Nothing was published.";
       if (message.includes("already taken")) setErrors((current) => ({ ...current, slug: message }));

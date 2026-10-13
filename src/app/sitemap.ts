@@ -1,15 +1,11 @@
 import type { MetadataRoute } from "next";
 
-import { getCatalog } from "@/lib/catalog";
 import { site } from "@/lib/site";
 
 export const dynamic = "force-static";
 
+// Setups live in the database and are rendered in the browser at /setup?slug=…, so a
+// static sitemap can only list the fixed pages.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["", "/explore", "/publish", "/about"].map((path) => ({ url: `${site.url}${path}` }));
-  const setups = getCatalog().setups.map((setup) => ({
-    url: `${site.url}/setups/${setup.slug}`,
-    lastModified: setup.updatedAt,
-  }));
-  return [...pages, ...setups];
+  return ["", "/explore", "/agents", "/publish", "/about"].map((path) => ({ url: `${site.url}${path}` }));
 }
