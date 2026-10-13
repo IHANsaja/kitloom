@@ -189,6 +189,6 @@ connected unless it was actually done and verified.
   depends on GSAP loading.
 - **Toasts.** Sonner injects styles at runtime; the theme overrides in `globals.css` are
   prefixed with `html` to win on specificity.
-- **Site repository URL.** `site.repositoryUrl` is `null` until the public repository
-  exists. The Publish page and footer adapt automatically.
+- **Site repository URL.** `site.repositoryUrl` points at https://github.com/IHANsaja/kitloom.
+  Setting it to `null` hides every repository link; the Publish page and footer adapt.
 - **Licence.** Starter kits are MIT. The site's own source has no licence chosen yet.

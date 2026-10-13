@@ -26,30 +26,10 @@ environment variable required at build or run time.
 verifies their size and SHA-256 against the catalog. Running `next build` directly skips
 that step and ships a site whose Download buttons return 404.
 
-## 1. Put the repository on GitHub
+## 1. Repository
 
-The project is a local git repository with no remote and no commits yet.
-
-```bash
-git add -A
-```
-
-```bash
-git commit -m "Initial Kitloom MVP"
-```
-
-Create an empty repository on GitHub, then:
-
-```bash
-git remote add origin https://github.com/<owner>/<repo>.git
-```
-
-```bash
-git push -u origin main
-```
-
-Then set `repositoryUrl` in `src/lib/site.ts` to that URL, commit, and push. Until it is
-set, the Publish page shows a "repository not connected yet" notice instead of links.
+The source is at https://github.com/IHANsaja/kitloom (public, default branch `main`), and
+`repositoryUrl` in `src/lib/site.ts` already points to it.
 
 ## 2. Create the Pages project
 

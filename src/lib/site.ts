@@ -10,13 +10,11 @@ export const site = {
     "A free, open directory of AI coding-agent setups — instructions, rules, skills, commands, and hooks for Claude Code, Codex, Cursor, Antigravity, and more. Inspect what is inside, then download the ZIP.",
 
   /**
-   * REQUIRES CONFIGURATION.
-   * The public GitHub repository that hosts this site and accepts catalog contributions,
-   * for example "https://github.com/<owner>/<repo>". Leave as null until that repository
-   * actually exists: while null, the Publish page explains the process without linking
-   * anywhere, instead of pointing at a repository that is not there.
+   * The public GitHub repository that hosts this site and accepts catalog contributions.
+   * Set to null to hide every repository link (the Publish page then explains the process
+   * without linking anywhere).
    */
-  repositoryUrl: null as string | null,
+  repositoryUrl: "https://github.com/IHANsaja/kitloom" as string | null,
   repositoryDefaultBranch: "main",
 } as const;
 
