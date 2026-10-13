@@ -344,7 +344,7 @@ same physics. Every page has at least one illustration, and each says something 
 | `WeaveField` | Home hero (fallback for the WebGL loom) | Warp and weft with lime shuttles passing through |
 | `ThreadTick` | Every section header | A thread pulled taut and knotted as the section arrives |
 | `AgentThreads` | Home, "By agent" | Threads from several agents running into one kit |
-| `Harness` | Agents header | A loom harness with one heddle per agent: alternate heddles lift, a lime shuttle passes through the shed, and the sets swap |
+| `Harness` | Agents header | A loom harness with one heddle eye per agent: the threads stay put, alternate eyes lift, a lime shuttle carries a weft through the gap, the weft is beaten down into the cloth, and the sets swap |
 | `RepoToZip` | Home, publish band | Files leaving a repository and being packed into a ZIP |
 | `Shuttle` | Explore header | A shuttle carrying the weft through the warp, row by row |
 | `KitUnfold` | Setup detail header | A kit opening, its files rising out to be read |

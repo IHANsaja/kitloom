@@ -246,8 +246,9 @@ export function EmptyLoom({ className }: ArtProps) {
 }
 
 /**
- * Agents: a loom harness with one heddle per agent. Alternate heddles lift to open a shed,
- * a lime shuttle passes through, and the sets swap — every agent takes the same thread.
+ * Agents: a loom harness with one heddle per agent. The warp threads stay put; the heddle
+ * eyes slide along them. Alternate eyes lift to open a gap, a lime shuttle carries a weft
+ * through it, the weft is beaten down into the cloth, and the two sets of eyes swap.
  */
 export function Harness({ className }: ArtProps) {
   const ref = useSvgMotion(
@@ -256,34 +257,58 @@ export function Harness({ className }: ArtProps) {
       const even = q("[data-m=even]");
       const shuttle = q("[data-m=shuttle]");
       const picks = q("[data-m=pick]");
-      const pass = (from: number, to: number, pick: SVGElement | undefined, at: string) => {
-        tl.fromTo(shuttle, { x: from, opacity: 1 }, { x: to, duration: 1.1, ease: "power2.inOut" }, at);
-        if (pick) tl.fromTo(pick, { strokeDashoffset: from < to ? 1 : -1, opacity: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, "<");
+      const LEFT = -40;
+      const RIGHT = 256;
+
+      /** One pass of the shuttle, drawing a weft behind it, then beating it into place. */
+      const weave = (pick: SVGElement | undefined, leftToRight: boolean, restAt: number) => {
+        const from = leftToRight ? LEFT : RIGHT;
+        const to = leftToRight ? RIGHT : LEFT;
+        tl.set(shuttle, { x: from, opacity: 1 }).to(shuttle, { x: to, duration: 1.2, ease: "power2.inOut" });
+        if (pick) {
+          tl.set(pick, { opacity: 1, y: 0, strokeDashoffset: leftToRight ? 1 : -1 }, "<")
+            .to(pick, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, "<")
+            .to(pick, { y: restAt, duration: 0.3, ease: "power3.in" }, ">0.05");
+        }
+        tl.set(shuttle, { opacity: 0 });
       };
-      tl.set(picks, { opacity: 0 }).set(shuttle, { opacity: 0 });
-      tl.to(odd, { y: -11, duration: 0.45, stagger: 0.03 }).to(even, { y: 11, duration: 0.45, stagger: 0.03 }, "<");
-      pass(-34, 250, picks[0], ">");
-      tl.to(odd, { y: 11, duration: 0.5, stagger: 0.03 }, ">0.15").to(even, { y: -11, duration: 0.5, stagger: 0.03 }, "<");
-      pass(250, -34, picks[1], ">");
-      tl.to([...odd, ...even], { y: 0, duration: 0.5 }, ">0.15").to(picks, { opacity: 0, duration: 0.6 }, ">1");
+
+      tl.set(picks, { opacity: 0, y: 0 }).set(shuttle, { opacity: 0 });
+      tl.to(odd, { y: -12, duration: 0.4, stagger: 0.02 }).to(even, { y: 12, duration: 0.4, stagger: 0.02 }, "<");
+      weave(picks[0], true, 36);
+      tl.to(odd, { y: 12, duration: 0.45, stagger: 0.02 }, ">0.1").to(even, { y: -12, duration: 0.45, stagger: 0.02 }, "<");
+      weave(picks[1], false, 30);
+      tl.to(odd, { y: -12, duration: 0.45, stagger: 0.02 }, ">0.1").to(even, { y: 12, duration: 0.45, stagger: 0.02 }, "<");
+      weave(picks[2], true, 24);
+      tl.to([...odd, ...even], { y: 0, duration: 0.45 }, ">0.1").to(picks, { opacity: 0, duration: 0.7 }, ">1.2");
     },
-    { repeatDelay: 0.4 },
+    { repeatDelay: 0.5 },
   );
   return (
     <svg ref={ref} {...svgProps} viewBox="0 0 250 120" className={className}>
+      <g className="stroke-line-control" strokeWidth={1}>
+        {range(9).map((i) => (
+          <path key={i} d={`M${29 + i * 24} 12v96`} />
+        ))}
+      </g>
       <path d="M8 12h234M8 108h234" className="stroke-fg-2" strokeWidth={1.5} />
-      <path data-m="pick" d="M14 54h222" className="stroke-lime" strokeWidth={2} {...drawable} />
-      <path data-m="pick" d="M14 66h222" className="stroke-lime" strokeWidth={2} {...drawable} />
-      {range(9).map((i) => {
-        const x = 29 + i * 24;
-        return (
-          <g key={i} data-m={i % 2 === 0 ? "odd" : "even"}>
-            <path d={`M${x} 12v96`} className="stroke-line-control" strokeWidth={1} />
-            <rect x={x - 3.5} y={55} width={7} height={10} rx={1} className={i === 4 ? "fill-carbon stroke-lime" : "fill-carbon stroke-fg-2"} strokeWidth={1.5} />
-          </g>
-        );
-      })}
-      <path data-m="shuttle" d="M0 60q17-9 34 0q-17 9-34 0z" className="fill-carbon stroke-lime" strokeWidth={1.5} opacity={0} />
+      {range(3).map((i) => (
+        <path key={i} data-m="pick" d="M14 60h222" className="stroke-lime" strokeWidth={2} opacity={i === 0 ? 1 : 0} {...drawable} />
+      ))}
+      {range(9).map((i) => (
+        <rect
+          key={i}
+          data-m={i % 2 === 0 ? "odd" : "even"}
+          x={29 + i * 24 - 3.5}
+          y={55}
+          width={7}
+          height={10}
+          rx={1}
+          className={i === 4 ? "fill-carbon stroke-lime" : "fill-carbon stroke-fg-2"}
+          strokeWidth={1.5}
+        />
+      ))}
+      <path data-m="shuttle" d="M0 60q17-8 34 0q-17 8-34 0z" className="fill-carbon stroke-lime" strokeWidth={1.5} opacity={0} />
     </svg>
   );
 }
