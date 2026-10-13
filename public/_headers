@@ -1,0 +1,13 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/packages/*
+  Content-Type: application/zip
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=3600

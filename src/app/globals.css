@@ -1,0 +1,330 @@
+@import "tailwindcss";
+
+/* Design tokens. See design.md — components never use raw hex values. */
+@theme {
+  --color-*: initial;
+  --color-carbon: #111318;
+  --color-surface: #1b1e25;
+  --color-surface-2: #20242d;
+  --color-lime: #d9ff72;
+  --color-lime-strong: #e8ffa3;
+  --color-fg: #f2f3f5;
+  --color-fg-2: #a7abb5;
+  --color-fg-3: #777e8a;
+  --color-line: #343944;
+  --color-line-subtle: #282c35;
+  --color-line-control: #6b7280;
+  --color-success: #7bd49a;
+  --color-warning: #f0b95b;
+  --color-danger: #ff8a80;
+  --color-info: #8ab8f0;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --text-display: clamp(2.25rem, 1.35rem + 3.9vw, 3.75rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 600;
+  --text-h1: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h1--font-weight: 600;
+  --text-h2: 1.25rem;
+  --text-h2--line-height: 1.3;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 600;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+  --text-code: 0.8125rem;
+  --text-code--line-height: 1.6;
+
+  --breakpoint-wide: 90rem;
+  --ease-kit: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-carbon);
+    color: var(--color-fg);
+    color-scheme: dark;
+    scroll-padding-top: 4.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    min-height: 100dvh;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-lime);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-carbon);
+  }
+
+  button,
+  summary,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Horizontal padding shared by every cell of the ruled sheet. */
+@utility cell-x {
+  padding-inline: 1rem;
+  @variant sm {
+    padding-inline: 1.5rem;
+  }
+  @variant lg {
+    padding-inline: 2.5rem;
+  }
+}
+
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@utility kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: 0.3rem;
+  border: 1px solid var(--color-line-control);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: var(--color-fg-2);
+}
+
+@utility link {
+  color: var(--color-fg);
+  text-decoration: underline;
+  text-decoration-color: var(--color-line-control);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 120ms var(--ease-kit);
+  &:hover {
+    text-decoration-color: var(--color-lime);
+  }
+}
+
+/* Entrance items are pre-hidden only when JavaScript is running and motion is welcome.
+   If GSAP never runs, the fallback animation reveals them. See design.md §7. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal="load"] [data-reveal-item] {
+    opacity: 0;
+    animation: kit-reveal-fallback 1ms linear 3s forwards;
+  }
+}
+
+@keyframes kit-reveal-fallback {
+  to {
+    opacity: 1;
+  }
+}
+
+/* README previews: untrusted Markdown rendered by ReadmePreview. */
+.prose-kit {
+  color: var(--color-fg-2);
+  font-size: var(--text-body);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.prose-kit > :first-child {
+  margin-top: 0;
+}
+.prose-kit > :last-child {
+  margin-bottom: 0;
+}
+.prose-kit :is(h3, h4, h5, h6) {
+  color: var(--color-fg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin: 1.75em 0 0.6em;
+}
+.prose-kit h3 {
+  font-size: 1.25rem;
+}
+.prose-kit h4 {
+  font-size: 1.0625rem;
+}
+.prose-kit :is(h5, h6) {
+  font-size: 0.9375rem;
+}
+.prose-kit :is(p, ul, ol, pre, table, blockquote) {
+  margin: 0 0 1em;
+}
+.prose-kit :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+.prose-kit ul {
+  list-style: square;
+}
+.prose-kit ol {
+  list-style: decimal;
+}
+.prose-kit li {
+  margin: 0.3em 0;
+}
+.prose-kit li::marker {
+  color: var(--color-fg-3);
+}
+.prose-kit strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+.prose-kit a {
+  color: var(--color-fg);
+  text-decoration: underline;
+  text-decoration-color: var(--color-line-control);
+  text-underline-offset: 3px;
+}
+.prose-kit a:hover {
+  text-decoration-color: var(--color-lime);
+}
+.prose-kit code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-fg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line-subtle);
+  border-radius: 2px;
+  padding: 0.08em 0.35em;
+}
+.prose-kit pre {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 2px;
+  padding: 0.875rem 1rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.prose-kit pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  overflow-wrap: normal;
+  white-space: pre;
+}
+.prose-kit blockquote {
+  border-left: 2px solid var(--color-line-control);
+  padding-left: 1rem;
+}
+.prose-kit hr {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  margin: 1.75em 0;
+}
+.prose-kit .table-scroll {
+  overflow-x: auto;
+  margin: 0 0 1em;
+}
+.prose-kit table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.prose-kit :is(th, td) {
+  border: 1px solid var(--color-line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-kit th {
+  color: var(--color-fg);
+  font-weight: 600;
+  background: var(--color-surface);
+}
+
+/* Sonner toasts, themed from tokens. See design.md §5 "Toast". */
+/* Sonner injects its own stylesheet at runtime, so these selectors carry an extra `html`
+   to win on specificity without !important. */
+html [data-sonner-toaster][data-sonner-theme] {
+  --normal-bg: var(--color-surface);
+  --normal-bg-hover: var(--color-surface-2);
+  --normal-border: var(--color-line);
+  --normal-border-hover: var(--color-line-control);
+  --normal-text: var(--color-fg);
+  --border-radius: 4px;
+  font-family: var(--font-sans);
+}
+html [data-sonner-toast][data-styled="true"] {
+  background: var(--color-surface);
+  color: var(--color-fg);
+  border: 1px solid var(--color-line);
+  border-left: 2px solid var(--color-info);
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 0.75rem 0.875rem;
+  gap: 0.625rem;
+  align-items: flex-start;
+}
+html [data-sonner-toast][data-styled="true"][data-type="success"] {
+  border-left-color: var(--color-lime);
+}
+html [data-sonner-toast][data-styled="true"][data-type="error"] {
+  border-left-color: var(--color-danger);
+}
+html [data-sonner-toast][data-styled="true"] [data-icon] {
+  margin-top: 0.125rem;
+}
+html [data-sonner-toast][data-styled="true"] [data-title] {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+html [data-sonner-toast][data-styled="true"] [data-description] {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-fg-2);
+  overflow-wrap: anywhere;
+}
+html [data-sonner-toast][data-styled="true"] [data-button] {
+  height: 1.75rem;
+  border-radius: 2px;
+  background: var(--color-lime);
+  color: var(--color-carbon);
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding-inline: 0.625rem;
+}
+
+/* Quiet scrollbars for the few regions that scroll inside the sheet. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
