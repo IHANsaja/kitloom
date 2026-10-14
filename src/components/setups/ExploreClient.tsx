@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
 import { FilterGroup } from "@/components/filters/FilterGroup";
+import { useGlide } from "@/components/motion/useGlide";
 import { SortSelect } from "@/components/filters/SortSelect";
 import { SearchInput } from "@/components/search/SearchInput";
 import { SetupGrid } from "@/components/setups/SetupCell";
@@ -39,6 +40,7 @@ const ANIMATED_CELLS = 12;
  */
 export function ExploreClient() {
   const { setups, state } = useSetups();
+  const filterGlide = useGlide<HTMLElement>("left");
   const pathname = usePathname();
   const params = useSearchParams();
   const urlKey = new URLSearchParams(params.toString()).toString();
@@ -137,6 +139,7 @@ export function ExploreClient() {
         </div>
 
         <aside
+          ref={filterGlide}
           id="explore-filters"
           aria-label="Filters"
           className={cx("lg:sticky lg:top-14 lg:block lg:max-h-[calc(100dvh-3.5rem)] lg:overflow-y-auto", !filtersOpen && "hidden")}

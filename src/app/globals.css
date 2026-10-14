@@ -337,3 +337,50 @@ html [data-sonner-toast][data-styled="true"] [data-button] {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;
 }
+
+/* Glide (src/components/motion/useGlide.ts): while one highlight travels between the items
+   of a group, the items' own hover backgrounds step aside so the two do not double up.
+   Selected items keep theirs. Unlayered, so it wins over Tailwind's hover utilities. */
+[data-glide-on] [data-glide]:hover:not([aria-pressed="true"]):not(:has(input:checked)) {
+  background-color: transparent;
+}
+
+/* Stitch sampler (src/components/scan/StitchSampler.tsx): plain CSS motion, driven by the
+   positions React renders from real scan progress. */
+@keyframes kl-stitch {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes kl-needle-bob {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-2px, 3px);
+  }
+}
+.kl-stitch {
+  animation: kl-stitch 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.kl-needle-bob {
+  animation: kl-needle-bob 0.5s ease-in-out infinite;
+}
+.kl-follow {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kl-stitch,
+  .kl-needle-bob {
+    animation: none;
+  }
+  .kl-follow {
+    transition: none;
+  }
+}

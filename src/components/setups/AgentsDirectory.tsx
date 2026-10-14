@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LoadingLine } from "@/components/motion/Strings";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
+import { useGlide } from "@/components/motion/useGlide";
 import { buttonClass, cx } from "@/components/ui/styles";
 import { exploreHref } from "@/lib/catalog/query";
 import { setupHref } from "@/lib/catalog/summary";
@@ -23,7 +24,7 @@ function browseHref(agent: AgentDefinition): string {
 function AgentRow({ agent, index, setups, ready }: { agent: AgentDefinition; index: number; setups: SetupSummary[]; ready: boolean }) {
   const count = setups.length;
   return (
-    <li className="border-b border-line last:border-b-0">
+    <li data-glide className="border-b border-line last:border-b-0">
       <article aria-labelledby={`agent-${agent.id}`} className="lg:grid lg:grid-cols-12">
         <div className="cell-x py-6 lg:col-span-4 lg:border-r lg:border-line">
           <p className="font-mono text-xs text-fg-3 tabular-nums">{String(index + 1).padStart(2, "0")}</p>
@@ -81,6 +82,7 @@ function AgentRow({ agent, index, setups, ready }: { agent: AgentDefinition; ind
 export function AgentsDirectory() {
   const { setups, state } = useSetups();
   const ready = state === "ready";
+  const glide = useGlide<HTMLOListElement>("left");
 
   return (
     <>
@@ -94,7 +96,7 @@ export function AgentsDirectory() {
           </Notice>
         </div>
       ) : null}
-      <ol>
+      <ol ref={glide}>
         {AGENTS.map((agent, index) => (
           <AgentRow key={agent.id} agent={agent} index={index} ready={ready} setups={setups.filter((setup) => setup.agents.includes(agent.id))} />
         ))}

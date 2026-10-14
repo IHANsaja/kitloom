@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { useGlide } from "@/components/motion/useGlide";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Notice } from "@/components/ui/Notice";
 import { buttonClass } from "@/components/ui/styles";
@@ -27,6 +28,7 @@ export function AccountPanel() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const glide = useGlide<HTMLUListElement>("left");
 
   useEffect(() => {
     if (session === null) router.replace("/signin?next=/account");
@@ -147,9 +149,9 @@ export function AccountPanel() {
             Put your agent files in a public GitHub repository, then list it here with a short description.
           </EmptyState>
         ) : (
-          <ul>
+          <ul ref={glide}>
             {setups.map(({ setup, status }) => (
-              <li key={setup.slug} className="cell-x flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-b border-line-subtle py-4 last:border-b-0">
+              <li key={setup.slug} data-glide className="cell-x flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-b border-line-subtle py-4 last:border-b-0">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <Link href={setupHref(setup.slug)} className="link font-semibold break-words">

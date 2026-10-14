@@ -329,8 +329,16 @@ Built with **GSAP** (`gsap` + `@gsap/react`'s `useGSAP`, `ScrollTrigger`, `Motio
 | Results update | When search/filter/sort changes, result cells fade up 8px | 0.25s, 30ms stagger, capped at 12 cells |
 | Mobile menu | Menu rows slide down 6px and fade in | 0.18s |
 | Hover / focus | Colour, border, background; a 2px arrow nudge | CSS, 120–160ms |
+| Glide (hover between items) | In a group of items, one highlight travels to whichever item the pointer or keyboard focus is on. The leading edge arrives first and the trailing edge follows, so it stretches across the gap like a pulled thread, then its lime edge is plucked. Lists use a left edge, the header nav a bottom edge, grids four corner marks | lead 0.22s / trail 0.46s, `power3.out`; pluck 0.6s `elastic.out`; fades out 90ms after the pointer leaves |
 
 The shared wrapper is `src/components/ui/Reveal.tsx`.
+
+**Glide** lives in `src/components/motion/useGlide.ts`: put its ref on a container and
+`data-glide` on each item. It is used by the header nav, Explore filters, every setup grid,
+the home agent cells and category rows, the Agents ledger, the publish form's checkbox
+grids and the account list. New groups of hoverable items should use it rather than a
+per-item hover background. It only attaches with a fine pointer and motion welcome; on
+touch or reduced motion the items' own CSS hover applies.
 
 ### 7.2 SVG illustrations (GSAP)
 
@@ -356,6 +364,8 @@ same physics. Every page has at least one illustration, and each says something 
 | `EmptyLoom` | Every empty state | A threaded loom with one weft waiting |
 | `WeftWave` | Footer | A row of warp ends with a wave travelling along it |
 | `StringLoader` | Every loading line | A wave of plucks running along a short row of strings |
+| `TreeLoader` | Home hero, the "What a kit looks like" panel while it loads | The outline of a kit ruled in row by row with a lime marker stepping down beside it; it fills the panel, which keeps the same height once the real file list arrives and its rows slide in |
+| `StitchSampler` | Heddle download dialog | The scan as a cross-stitch sampler in a hoop: one stitch per slice of the repository's files. A lime needle runs back and forth along the rows, like one thread worked across the cloth, and sews a cross for every slice actually read; slices with findings are stitched in the finding's colour, and the faint thread behind shows the path. When the scan ends the needle is parked and a rule in the verdict's colour is drawn underneath. Pure CSS motion (no GSAP): positions come from real progress, so it is always correct and quicker than ambient loops |
 | `Gutters` (playable strings) | The margins outside the frame, every page, at 1520px and wider | Loom strings that react to the cursor: they bow away as it comes near, are plucked when it sweeps across, turn lime and vibrate until they settle, and pass movement to their neighbours |
 
 Rules for adding one:

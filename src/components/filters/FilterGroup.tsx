@@ -32,6 +32,7 @@ function Row({ label, count, pressed, pending, hint, onClick }: RowProps) {
     <li>
       <button
         type="button"
+        data-glide
         aria-pressed={pressed}
         title={hint}
         onClick={onClick}

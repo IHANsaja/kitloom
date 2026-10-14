@@ -85,6 +85,66 @@ export function ThreadTick({ className }: { className?: string }) {
   );
 }
 
+// Indent level and bar length of each placeholder row: the outline of a small kit.
+const TREE_ROWS: readonly (readonly [number, number])[] = [
+  [0, 132],
+  [1, 84],
+  [2, 118],
+  [3, 96],
+  [2, 74],
+  [1, 108],
+  [2, 136],
+  [2, 90],
+  [1, 70],
+  [0, 112],
+  [0, 88],
+];
+
+/**
+ * Loading state for a whole file-tree panel: the outline of a kit is ruled in row by row,
+ * a lime marker stepping down beside it, then it clears and starts again. It fills its
+ * container, so the panel keeps its size while the real file list is fetched.
+ */
+export function TreeLoader({ className }: { className?: string }) {
+  const ref = useSvgMotion(
+    (tl, q) => {
+      const rows = q("[data-m=row]");
+      const icons = q("[data-m=icon]");
+      const marker = q("[data-m=marker]");
+      tl.set(rows, { strokeDashoffset: 1 }).set(icons, { opacity: 0 }).set(marker, { y: 0, opacity: 1 });
+      rows.forEach((row, index) => {
+        const at = index * 0.13;
+        tl.to(marker, { y: index * 24, duration: 0.13, ease: "power1.inOut" }, at)
+          .to(icons[index] ?? [], { opacity: 1, duration: 0.12 }, at)
+          .to(row, { strokeDashoffset: 0, duration: 0.42, ease: "power2.out" }, at + 0.04);
+      });
+      tl.to(marker, { opacity: 0, duration: 0.2 }, ">-0.1")
+        .to([...rows, ...icons], { opacity: 0.25, duration: 0.5, stagger: { amount: 0.3 } }, "+=0.5")
+        .set(rows, { opacity: 1 })
+        .set(icons, { opacity: 1 });
+    },
+    { repeatDelay: 0.15 },
+  );
+  return (
+    <svg ref={ref} {...motionSvg} viewBox="0 0 320 276" preserveAspectRatio="xMinYMin meet" className={className}>
+      <g className="stroke-line-subtle" strokeWidth={1}>
+        <path d="M21 26V230M43 50V206M65 74V98" />
+      </g>
+      {TREE_ROWS.map(([level, width], index) => {
+        const x = 16 + level * 22;
+        const y = 14 + index * 24;
+        return (
+          <g key={index}>
+            <rect data-m="icon" x={x} y={y - 5} width={10} height={10} className="stroke-line-control" strokeWidth={1.5} />
+            <path data-m="row" d={`M${x + 20} ${y}h${width}`} className="stroke-line-control" strokeWidth={6} strokeLinecap="butt" {...drawable} />
+          </g>
+        );
+      })}
+      <rect data-m="marker" x={2} y={10} width={4} height={8} className="fill-lime" opacity={0} />
+    </svg>
+  );
+}
+
 /** Footer band: a row of warp ends with a slow wave travelling along it. */
 export function WeftWave({ className }: { className?: string }) {
   const ref = useSvgMotion(

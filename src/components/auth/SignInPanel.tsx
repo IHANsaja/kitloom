@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { Turnstile, turnstileSiteKey, type TurnstileHandle } from "@/components/auth/Turnstile";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { buttonClass, inputClass } from "@/components/ui/styles";
@@ -36,6 +37,10 @@ export function SignInPanel() {
   const [busy, setBusy] = useState<OAuthProviderId | "email" | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Only used when a Turnstile site key is configured (see Turnstile.tsx).
+  const captcha = useRef<TurnstileHandle>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -81,18 +86,26 @@ export function SignInPanel() {
       setError("Enter a valid email address.");
       return;
     }
+    if (turnstileSiteKey && !captchaToken) {
+      setError("Complete the check above the button first.");
+      return;
+    }
     setError(null);
     setBusy("email");
     const { error: failure } = await getSupabaseClient().auth.signInWithOtp({
       email: address,
-      options: { emailRedirectTo: callbackUrl(next), shouldCreateUser: true },
+      options: { emailRedirectTo: callbackUrl(next), shouldCreateUser: true, captchaToken: captchaToken ?? undefined },
     });
     setBusy(null);
+    // A token is accepted once, whatever the outcome.
+    captcha.current?.reset();
     if (failure) {
       setError(
         failure.status === 429
           ? "Too many sign-in emails were requested. Wait a few minutes and try again."
-          : "The sign-in email could not be sent. Check the address and try again.",
+          : /captcha/i.test(failure.message)
+            ? "The human check failed or expired. Complete it again, then resend."
+            : "The sign-in email could not be sent. Check the address and try again.",
       );
       return;
     }
@@ -181,7 +194,19 @@ export function SignInPanel() {
           <p id={`${emailId}-help`} className="mt-2 text-xs leading-relaxed text-fg-2">
             We email you a one-time sign-in link. No password. Your address is never shown publicly.
           </p>
-          <button type="submit" disabled={busy !== null} className={buttonClass(methods.oauth.length > 0 ? "secondary" : "primary", "lg", "mt-4 w-full disabled:opacity-60")}>
+          {turnstileSiteKey ? (
+            <div className="mt-4">
+              {captchaUnavailable ? (
+                <p className="text-xs leading-relaxed text-danger">
+                  The human check could not load, so email sign-in is unavailable. Allow
+                  challenges.cloudflare.com or use another sign-in method.
+                </p>
+              ) : (
+                <Turnstile ref={captcha} onToken={setCaptchaToken} onUnavailable={() => setCaptchaUnavailable(true)} />
+              )}
+            </div>
+          ) : null}
+          <button type="submit" disabled={busy !== null || (Boolean(turnstileSiteKey) && !captchaToken)} className={buttonClass(methods.oauth.length > 0 ? "secondary" : "primary", "lg", "mt-4 w-full disabled:opacity-60")}>
             {busy === "email" ? "Sending…" : "Email me a sign-in link"}
           </button>
         </form>

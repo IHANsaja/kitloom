@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 
 import { FileTree } from "@/components/files/FileTree";
 import { totalBytes } from "@/components/files/tree";
@@ -18,7 +20,10 @@ import { formatBytes, pluralize } from "@/lib/format";
 import { gitHubRepoLabel } from "@/lib/packages/urls";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import type { Setup } from "@/types/catalog";
+import { TreeLoader } from "@/components/motion/Ambient";
 import { LoadingLine } from "@/components/motion/Strings";
+import { MOTION_OK } from "@/components/ui/Reveal";
+import { useGlide } from "@/components/motion/useGlide";
 
 /**
  * Home-page sections. Every number and listing here comes from the database, fetched in
@@ -40,11 +45,12 @@ function Count({ value, state }: { value: number; state: SetupsState }) {
 
 export function AgentCells() {
   const { setups, state } = useSetups();
+  const glide = useGlide<HTMLUListElement>("corners");
   return (
-    <ul className="grid grid-cols-2 gap-px bg-line md:grid-cols-3 xl:grid-cols-6">
+    <ul ref={glide} className="grid grid-cols-2 gap-px bg-line md:grid-cols-3 xl:grid-cols-6">
       {AGENT_FILTERS.map((filter) => (
         <li key={filter.id} className="bg-carbon">
-          <Link href={exploreHref({ agent: filter.id })} className={cellLink}>
+          <Link href={exploreHref({ agent: filter.id })} data-glide className={cellLink}>
             <span className="flex items-start justify-between gap-2">
               <span className="font-semibold tracking-[-0.01em]">{filter.label}</span>
               <Icon name="arrow-up-right" size={14} className="mt-1 shrink-0 text-fg-3 transition duration-150 ease-kit group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-lime" />
@@ -56,7 +62,7 @@ export function AgentCells() {
         </li>
       ))}
       <li className="bg-carbon">
-        <Link href="/explore" className={cellLink}>
+        <Link href="/explore" data-glide className={cellLink}>
           <span className="flex items-start justify-between gap-2">
             <span className="font-semibold tracking-[-0.01em]">All setups</span>
             <Icon name="arrow-right" size={14} className="mt-1 shrink-0 text-fg-3 transition duration-150 ease-kit group-hover:translate-x-0.5 group-hover:text-lime" />
@@ -129,12 +135,14 @@ export function BrowseAllLink() {
 
 export function CategoryRows() {
   const { setups, state } = useSetups();
+  const glide = useGlide<HTMLUListElement>("left");
   return (
-    <ul>
+    <ul ref={glide}>
       {CATEGORIES.map((category, index) => (
         <li key={category.id} data-reveal-item className="border-b border-line-subtle last:border-b-0">
           <Link
             href={exploreHref({ category: category.id })}
+            data-glide
             className="cell-x group flex items-baseline gap-4 py-4 transition-colors duration-150 ease-kit hover:bg-surface"
           >
             <span className="w-6 shrink-0 font-mono text-xs text-fg-3 tabular-nums">{String(index + 1).padStart(2, "0")}</span>
@@ -155,12 +163,17 @@ export function CategoryRows() {
 
 type ShowcaseState = { kind: "loading" } | { kind: "ready"; setup: Setup } | { kind: "none" };
 
+// The panel keeps this height while loading and once loaded, so nothing jumps.
+const PANEL = "cell-x h-[26rem] grow py-5 lg:px-6";
+
 /**
  * The hero's worked example: the real file list of the most recently published setup.
  * With nothing published it explains what a kit is instead of inventing one.
  */
 export function ShowcaseKit() {
   const [state, setState] = useState<ShowcaseState>(isSupabaseConfigured ? { kind: "loading" } : { kind: "none" });
+  const tree = useRef<HTMLDivElement>(null);
+  const loaded = state.kind === "ready";
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -174,19 +187,48 @@ export function ShowcaseKit() {
     };
   }, []);
 
-  if (state.kind !== "ready") {
+  // The file list arrives after the page's own entrance has finished, so it gets its own:
+  // rows slide in from the left, top to bottom.
+  useGSAP(
+    () => {
+      if (!loaded) return;
+      const mm = gsap.matchMedia();
+      mm.add(MOTION_OK, () => {
+        gsap.fromTo(
+          "[data-tree-row]",
+          { opacity: 0, x: -10 },
+          { opacity: 1, x: 0, duration: 0.3, ease: "power2.out", stagger: { amount: 0.6 }, clearProps: "all" },
+        );
+      });
+    },
+    { scope: tree, dependencies: [loaded] },
+  );
+
+  if (state.kind === "none") {
     return (
       <div className="cell-x py-10 lg:px-6">
         <p className="eyebrow text-fg-3">What a kit looks like</p>
-        {state.kind === "loading" ? (
-          <LoadingLine className="mt-4">Loading the latest setup…</LoadingLine>
-        ) : (
-          <p className="mt-3 max-w-[44ch] text-sm leading-relaxed text-fg-2">
-            A kit is a public GitHub repository of agent configuration: instructions, rules,
-            skills, commands, hooks. When a setup is published, its real file list appears here.
-          </p>
-        )}
+        <p className="mt-3 max-w-[44ch] text-sm leading-relaxed text-fg-2">
+          A kit is a public GitHub repository of agent configuration: instructions, rules,
+          skills, commands, hooks. When a setup is published, its real file list appears here.
+        </p>
       </div>
+    );
+  }
+
+  if (state.kind === "loading") {
+    return (
+      <>
+        <div className="cell-x flex items-center justify-between gap-4 border-b border-line py-3 lg:px-6">
+          <p className="eyebrow text-fg-3">What a kit looks like</p>
+          <p role="status" className="font-mono text-xs text-fg-2">
+            Reading the latest setup…
+          </p>
+        </div>
+        <div className={PANEL}>
+          <TreeLoader className="h-full w-full" />
+        </div>
+      </>
     );
   }
 
@@ -201,7 +243,7 @@ export function ShowcaseKit() {
           {bytes !== null ? ` · ${formatBytes(bytes)}` : ""}
         </p>
       </div>
-      <div className="cell-x max-h-[26rem] grow overflow-y-auto py-5 lg:px-6">
+      <div ref={tree} className={`${PANEL} overflow-y-auto`}>
         <FileTree rootName={gitHubRepoLabel(setup.repositoryUrl).split("/")[1] ?? setup.slug} manifest={setup.manifest} />
       </div>
       <div className="cell-x border-t border-line py-4 lg:px-6">

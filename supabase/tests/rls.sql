@@ -5,7 +5,8 @@
 -- it leaves no data behind. Run it in the Supabase SQL editor after any policy change.
 --
 -- Expected: steps 3, 11, 17, 18, 19 succeed; every other attempt reports "blocked", 0 rows,
--- or unchanged data.
+-- or unchanged data. Step 23 is blocked at setup #6, step 24 after 53 more edits (60 writes
+-- in total: 5 inserts, the successful edits in steps 11 and 19, and these).
 
 begin;
 create temp table t_results (step int, test text, outcome text) on commit drop;
@@ -116,6 +117,24 @@ begin
   exception when others then r := 'blocked: '||sqlerrm; end;
   insert into t_results values (22,'nine credit links', r);
 
+  -- Rate limits: alice has 1 new setup this hour (step 3); a sixth must be refused.
+  r := 'ALLOWED (bad)';
+  for i in 2..6 loop
+    begin
+      insert into public.setups (slug,name,description,agents,categories,repository_url)
+      values ('alice-kit-'||i,'Alice Kit '||i,'A description that is long enough to pass.', '{claude-code}','{documentation}','https://github.com/octo-alice/kit'||i);
+    exception when others then r := 'blocked at setup #'||i||': '||sqlerrm; exit; end;
+  end loop;
+  insert into t_results values (23,'sixth new setup within an hour', r);
+
+  r := 'ALLOWED (bad)';
+  for i in 1..80 loop
+    begin
+      update public.setups set version='1.0.'||i where slug='alice-kit-2';
+    exception when others then r := 'blocked after '||(i-1)||' more edits: '||sqlerrm; exit; end;
+  end loop;
+  insert into t_results values (24,'more than 60 writes within an hour', r);
+
   reset role;
   perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
   set local role authenticated;
@@ -125,7 +144,9 @@ begin
   delete from public.setups where slug='alice-kit';
   insert into t_results values (14,'bob deletes alice''s setup', 'still exists=' || (select count(*)::text from public.setups where slug='alice-kit'));
 
+  -- A maintainer in the dashboard: no user claims, so no rate limit applies.
   reset role;
+  perform set_config('request.jwt.claims','', true);
   update public.setups set status='hidden' where slug='alice-kit';
 
   perform set_config('request.jwt.claims','{"role":"anon"}', true);

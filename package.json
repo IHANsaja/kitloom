@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/csp.mjs",
     "preview": "npx --yes serve@14 out",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",

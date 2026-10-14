@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
+import { useGlide } from "@/components/motion/useGlide";
 import { Icon } from "@/components/ui/Icon";
 import { MOTION_OK } from "@/components/ui/Reveal";
 import { buttonClass, cx } from "@/components/ui/styles";
@@ -24,6 +25,7 @@ export function SiteNav() {
   const [lastPath, setLastPath] = useState(pathname);
   const panel = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
+  const navGlide = useGlide<HTMLElement>("bottom");
 
   // Close the mobile menu whenever the route changes.
   if (pathname !== lastPath) {
@@ -66,13 +68,14 @@ export function SiteNav() {
 
   return (
     <>
-      <nav aria-label="Primary" className="hidden h-full items-stretch md:flex">
+      <nav ref={navGlide} aria-label="Primary" className="hidden h-full items-stretch md:flex">
         {LINKS.map((link) => {
           const current = link.match(pathname);
           return (
             <Link
               key={link.href}
               href={link.href}
+              data-glide
               aria-current={current ? "page" : undefined}
               className={cx(
                 "relative flex items-center px-3.5 text-sm transition-colors duration-150 ease-kit hover:text-fg",

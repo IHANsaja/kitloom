@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+
+import { useGlide } from "@/components/motion/useGlide";
 
 import { Icon } from "@/components/ui/Icon";
 import { cx } from "@/components/ui/styles";
@@ -12,6 +16,7 @@ export function SetupCell({ setup }: { setup: SetupSummary }) {
   return (
     <article
       data-setup-cell
+      data-glide
       className="group relative flex h-full flex-col border-b border-line px-4 py-5 transition-colors duration-150 ease-kit hover:bg-surface sm:px-6 md:border-r lg:px-6"
     >
       <p className="flex items-center justify-between gap-3 font-mono text-xs text-fg-2">
@@ -61,8 +66,10 @@ interface SetupGridProps {
 
 /** Draws only bottom and right rules; the parent supplies the top and left edges. */
 export function SetupGrid({ setups, layout = "full" }: SetupGridProps) {
+  const glide = useGlide<HTMLUListElement>("corners");
   return (
     <ul
+      ref={glide}
       className={cx(
         "grid grid-cols-1 md:grid-cols-2 lg:-mr-px",
         layout === "full" ? "lg:grid-cols-3 wide:grid-cols-4" : "wide:grid-cols-3",

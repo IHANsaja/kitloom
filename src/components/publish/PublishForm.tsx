@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { useGlide } from "@/components/motion/useGlide";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { buttonClass, cx, inputClass } from "@/components/ui/styles";
@@ -84,18 +85,20 @@ interface CheckGroupProps<T extends string> {
 
 function CheckGroup<T extends string>({ legend, hint, error, options, selected, onChange }: CheckGroupProps<T>) {
   const id = useId();
+  const glide = useGlide<HTMLDivElement>("corners");
   return (
     <fieldset aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
       <legend className="text-sm font-medium">{legend}</legend>
       <p id={`${id}-hint`} className="mt-1 text-xs leading-relaxed text-fg-2">
         {hint}
       </p>
-      <div className="mt-3 grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
+      <div ref={glide} className="mt-3 grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 xl:grid-cols-3">
         {options.map((option) => {
           const checked = selected.includes(option.id);
           return (
             <label
               key={option.id}
+              data-glide
               className={cx(
                 "flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm transition-colors duration-150 ease-kit",
                 checked ? "bg-surface-2 text-fg" : "bg-carbon text-fg-2 hover:bg-surface hover:text-fg",

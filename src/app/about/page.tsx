@@ -87,14 +87,18 @@ const SECTIONS: { id: string; title: string; body: ReactNode }[] = [
           <li>Read every file before copying it into a project. The listing shows the full file list.</li>
           <li>Extract into an empty folder first, never straight into a repository.</li>
           <li>
-            There is no checksum to compare. The ZIP is built from the repository as it is at
-            that moment, so look at the repository and its commit history on GitHub.
+            There is no checksum to compare. The download is the ZIP of the exact commit Heddle
+            checked, and its file name carries that commit&apos;s ID, so you can look it up in the
+            repository&apos;s history on GitHub.
           </li>
           <li>Being hosted on GitHub, or listed here, does not make a package trusted.</li>
         </ul>
         <p>
-          Kitloom never executes package contents and does not run automated scanning.
-          Community listings appear as soon as their creator publishes them; they are not
+          Before every download, Heddle, Kitloom&apos;s pre-download check, reads the repository
+          at its latest commit in your browser and reports warning signs: commands that run on
+          their own, hidden or invisible instructions for agents, credential theft, disguised
+          programs. It never runs anything, and it cannot prove a setup is safe; malware can be
+          written to avoid it. Community listings appear as soon as their creator publishes them; they are not
           reviewed first. Maintainers can hide a listing after the fact. READMEs are displayed
           as plain Markdown with HTML removed and remote images blocked.
         </p>

@@ -54,8 +54,9 @@ Antigravity, and other coding agents (the registry of known agents lives in
   the dynamic import in `src/components/motion/Scenes.tsx`. Do not import `three` or
   `src/components/motion/tsl/scenes.ts` statically from anywhere else.
 - Server Components by default. Add `"use client"` only where interaction requires it.
-- The only external services are Supabase (free tier) and GitHub's public API. Do not add
-  a paid API or another mandatory service.
+- The only external services are Supabase (free tier), GitHub's public API, and the
+  optional Cloudflare Turnstile check on email sign-in. Do not add a paid API or another
+  mandatory service.
 - No hardcoded secrets, API keys, credentials, or personal tokens. `.env.local` is
   git-ignored; `.env.example` lists names only.
 - **Only public values may exist in this application's environment.** It is a static site:
@@ -92,8 +93,9 @@ in the HTML that search engines receive.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes, for any listing to appear | Public |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes, for any listing to appear | Public by design |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | No | Public. Shows the Turnstile check on email sign-in; Supabase holds the secret |
 
-Both are read at **build** time. Without them the site still builds, but it has nothing to
+All are read at **build** time. Without them the site still builds, but it has nothing to
 list and says so ("The directory is not connected").
 
 ## 5. Repository map
@@ -102,6 +104,7 @@ list and says so ("The directory is not connected").
 supabase/migrations/             SQL migrations, each with a matching .down.sql
 supabase/tests/rls.sql           Role-simulation test for the access rules (rolled back)
 public/_headers                  Cloudflare Pages response headers
+scripts/csp.mjs                  Post-build step: per-page Content-Security-Policy with script hashes
 src/app/                         Routes (see below)
 src/components/                  auth/ files/ filters/ layout/ publish/ search/ setups/ ui/
 src/components/motion/           Animated SVG library (useSvgMotion, Ambient, Illustrations),
@@ -110,6 +113,8 @@ src/components/motion/           Animated SVG library (useSvgMotion, Ambient, Il
 src/lib/catalog/                 taxonomy, pure query (search/filter/sort), summary helpers
 src/lib/community/               Supabase-backed setups: API, row mapping, validation, GitHub reader
 src/lib/packages/                URL safety, path safety, download access, content classifier
+src/lib/scan/                    Heddle, the pre-download check: rules.ts, analyze.ts (pure), heddle.ts (fetching)
+src/components/scan/             The Heddle dialog, its report, and the StitchSampler animation
 src/lib/supabase/                Browser client and session/auth helpers
 src/lib/site.ts                  Site-level config
 src/types/catalog.ts             Listing types
@@ -132,6 +137,7 @@ Routes: `/` · `/explore` · `/agents` · `/setup?slug=` · `/publish` (`?edit=<
 | Download eligibility | `src/lib/packages/access.ts` | `getDownloadAccess(setup)` is the single place that decides whether and how a setup can be downloaded. Today everything is free. |
 | Auth | `src/lib/supabase/auth.ts` | `useSession()` store, enabled-provider discovery, safe redirect paths. |
 | Package contents | `src/lib/packages/contents.ts` | Classifies file paths (skills, hooks, MCP config…) as a reading aid. Not a scanner. |
+| Pre-download check | `src/lib/scan/` (Heddle) | Runs in the browser when someone clicks download: pins the branch to a commit, reads the tree and every readable text file at that commit, and reports findings. The only code that decides what counts as a warning sign. |
 
 UI components never query Supabase directly.
 
@@ -148,8 +154,9 @@ validation exists only to give good error messages.
 - `setups` — public read of `status = 'published'`; owners also see their own hidden rows.
   Insert/update/delete only by the owner. `owner_id`, `status`, `id` and timestamps are not
   grantable columns: `owner_id` defaults to `auth.uid()`, `status` to `'published'`.
-  `slug` cannot be updated. A trigger caps accounts at 25 setups and validates tags and
-  credit links.
+  `slug` cannot be updated. A trigger caps accounts at 25 setups, rate-limits writes
+  (5 new setups and 60 writes per account per hour, logged in `private.setup_writes`,
+  which no client role can reach), and validates tags and credit links.
 - `status = 'hidden'` is moderation: set by a maintainer in the Supabase dashboard.
 - Every schema change ships as a migration in `supabase/migrations/` with a `.down.sql`,
   and is followed by `supabase/tests/rls.sql` and the Supabase security advisor.
@@ -159,7 +166,8 @@ validation exists only to give good error messages.
 
 - Slugs are lowercase kebab-case. Dates are ISO-8601.
 - The only acceptable download reference is a GitHub repository archive, derived in the
-  app from `repository_url` and `default_branch`. Nothing else, ever — see
+  app from `repository_url` and `default_branch` (the listing) or from the commit Heddle
+  checked (the actual download: `/archive/<40-hex sha>.zip`). Nothing else, ever — see
   `isAllowedDownloadUrl`.
 - `repositoryUrl` is exactly `https://github.com/<owner>/<repo>`, and the repository must
   be public or the download fails for everyone but its owner.
@@ -170,22 +178,47 @@ validation exists only to give good error messages.
   the form, `rowToCommunitySetup`, and the `setups_before_write` trigger.
 - `downloads` is `null`: there is no trustworthy counter. "Most downloaded" sorting only
   appears if real data ever exists.
-- There are no checksums. The archive follows the repository, so there is no fixed value to
-  compare against, and the UI says so rather than implying integrity checking.
+- There are no published checksums. The download is pinned to the commit Heddle checked, and
+  the commit ID is the reference; the UI does not imply integrity checking beyond that.
 
 ## 7. Security rules
 
 - Never execute package contents, never run downloaded scripts, never auto-install anything.
 - Hosting on GitHub does not make a ZIP trusted. The UI tells users to inspect before use.
 - Community listings are published without review and say so. Do not add copy that
-  implies vetting, scanning, or endorsement.
+  implies vetting or endorsement.
+- **Heddle (pre-download check).** Every download goes through it: the Download button
+  opens the Heddle dialog, which scans the commit and only then offers the ZIP of that
+  commit. Rules:
+  - It reports findings; it never says "safe", "clean", "verified" or "virus-free". The best
+    verdict is "No warning signs found", and every result carries the "use at your own
+    risk" notice and the recommendations. Keep both.
+  - It only reads files as text. It never executes, imports, or evaluates anything it reads.
+  - Results are computed in the visitor's browser and are never stored or shown to anyone
+    else, so they cannot be forged for other visitors. Do not cache a result in the database
+    without moving the scan to a trusted backend.
+  - "caution" and "danger" verdicts, and a failed scan, require the visitor to tick an
+    acknowledgement before the download link appears.
+  - New rules go in `src/lib/scan/rules.ts` (line patterns) or `analyze.ts` (tree and
+    config passes), each with a test in `analyze.test.ts` — including a test that ordinary
+    content does not trigger it.
+  - It costs two GitHub API calls per scan (commit, tree); file contents come from
+    `raw.githubusercontent.com`, which is in the CSP's `connect-src`.
 - README content is untrusted Markdown: rendered with `react-markdown` (no raw HTML), link
   protocols restricted, remote images never fetched.
 - Sign-in is passwordless only (OAuth or emailed link, PKCE flow). Do not add password
   fields. Post-sign-in redirects go through `safeNextPath` (same-site paths only).
 - Never display a user's email address to anyone but that user.
-- Never show or imply a checksum, signature, or "verified" state for a download: the ZIP
-  is generated by GitHub from a moving branch.
+- **Content-Security-Policy.** `scripts/csp.mjs` runs after every build and adds a
+  `<meta>` CSP to each exported page: scripts only from the site plus the SHA-256 of each
+  page's own inline scripts (no `unsafe-inline`, no `unsafe-eval`), network calls only to
+  the site, the Supabase project, `api.github.com` and `raw.githubusercontent.com`, no
+  frames, no plugins.
+  `public/_headers` adds `frame-ancestors 'none'`, HSTS and COOP. If you add a new
+  external host (an image CDN, an API), add it in `buildPolicy` or it will be blocked in
+  production. Development (`npm run dev`) does not apply the policy, so check new
+  features with `npm run build && npm run preview`.
+- Never show or imply a checksum, signature, or "verified" state for a download.
 - If ZIP uploads are ever added: reject path traversal and absolute paths, cap archive
   size / file count / compression ratio, never extract blindly, and do it on a backend.
 

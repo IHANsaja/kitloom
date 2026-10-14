@@ -121,14 +121,12 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
               <div className="cell-x border-b border-line py-6 lg:px-6">
                 {access.kind === "free" ? (
                   <>
-                    <DownloadButton url={access.url} />
-                    <p className="mt-3 font-mono text-xs break-all text-fg-2">
-                      {access.fileName ?? "ZIP named by GitHub"}
-                      {" · Free"}
-                    </p>
+                    <DownloadButton url={access.url} repositoryUrl={setup.repositoryUrl} />
+                    <p className="mt-3 font-mono text-xs text-fg-2">ZIP from github.com · Free</p>
                     <p className="mt-1.5 text-xs leading-relaxed text-fg-2">
-                      GitHub builds this ZIP from the creator&apos;s repository when you click, so you always
-                      get the repository as it is now. The download comes from github.com.
+                      First, Heddle checks the repository&apos;s latest commit in your browser for warning
+                      signs: hidden instructions, commands that run on their own, credential theft. Then
+                      you download exactly that commit. It cannot catch everything.
                     </p>
                   </>
                 ) : (
@@ -145,9 +143,9 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                   <Icon name="arrow-up-right" size={12} className="shrink-0 self-center text-fg-2" />
                 </a>
                 <p className="mt-2.5 text-xs leading-relaxed text-fg-2">
-                  There is no checksum to verify: the ZIP follows the repository, so it changes
-                  whenever the creator pushes. The repository&apos;s commit history is the record of what
-                  changed and when.
+                  There is no published checksum. Downloads are pinned to the commit Heddle checked,
+                  and the ZIP keeps that commit&apos;s ID in its name; the repository&apos;s commit history
+                  shows what changed and when.
                 </p>
               </div>
 
@@ -232,7 +230,8 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                   <p>
                     Agent setups can contain instructions, hooks, and tool configuration that make an
                     agent run commands on your machine. Read every file first. Listings are published
-                    by their creators without review, and Kitloom does not scan or execute their contents.
+                    by their creators without review. Heddle&apos;s pre-download check looks for warning
+                    signs, but it cannot prove a setup is safe, and Kitloom never runs their contents.
                   </p>
                 </Notice>
               </div>

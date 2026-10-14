@@ -3,7 +3,7 @@
  * All such values are treated as untrusted external input.
  */
 
-const GITHUB_ARCHIVE_PATH = /^\/[\w.-]+\/[\w.-]+\/archive\/(?:HEAD|refs\/heads\/[A-Za-z0-9._/-]+)\.zip$/;
+const GITHUB_ARCHIVE_PATH = /^\/[\w.-]+\/[\w.-]+\/archive\/(?:HEAD|refs\/heads\/[A-Za-z0-9._/-]+|[0-9a-f]{40})\.zip$/;
 const GITHUB_NAME = /^[A-Za-z0-9_.-]{1,100}$/;
 const GITHUB_BRANCH = /^[A-Za-z0-9._/-]{1,255}$/;
 
@@ -90,7 +90,26 @@ export function githubArchiveUrl(repositoryUrl: string, branch: string | null): 
   return `${repositoryUrl}/archive/${ref}.zip`;
 }
 
-/** A repository archive on github.com: /<owner>/<repo>/archive/(HEAD|refs/heads/<branch>).zip */
+/**
+ * The ZIP of one exact commit. Heddle scans a commit and the download is pinned to it, so
+ * what was checked is what is downloaded, even if the creator pushes afterwards.
+ */
+export function githubCommitArchiveUrl(repositoryUrl: string, commitSha: string): string {
+  if (!isGitHubRepoUrl(repositoryUrl) || !/^[0-9a-f]{40}$/.test(commitSha)) {
+    throw new Error("Invalid repository or commit.");
+  }
+  return `${repositoryUrl}/archive/${commitSha}.zip`;
+}
+
+/** The branch a branch archive follows, or "HEAD" for the default branch. Null if not one. */
+export function archiveRef(value: string): string | null {
+  if (!isGitHubArchiveUrl(value)) return null;
+  const match = /\/archive\/(?:refs\/heads\/(.+)|HEAD)\.zip$/.exec(new URL(value).pathname);
+  if (!match) return null;
+  return match[1] ?? "HEAD";
+}
+
+/** A repository archive on github.com: /<owner>/<repo>/archive/(HEAD|refs/heads/<branch>|<sha>).zip */
 export function isGitHubArchiveUrl(value: string): boolean {
   if (!isSafeHttpsUrl(value)) return false;
   const url = parseUrl(value);

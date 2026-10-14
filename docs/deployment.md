@@ -17,7 +17,8 @@ from a Supabase project that the browser talks to directly. There is no server o
 | Development command | `npm run dev` |
 | Production build command | `npm run build` |
 | Build output directory | `out` |
-| Environment variables | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (both public) |
+| Environment variables | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, optional `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (all public) |
+| Content-Security-Policy | Added to every page by `scripts/csp.mjs`, which runs automatically after `next build` |
 | Response headers | `public/_headers` (copied to `out/_headers`) |
 | Not-found page | `out/404.html`, served by Pages for unknown paths |
 
@@ -69,6 +70,38 @@ Community listings are public as soon as they are published. To take one down, o
 **Table Editor → setups** and set its `status` to `hidden`. The owner still sees it,
 labelled as hidden, and cannot change the status back.
 
+### Abuse protection
+
+Publishing limits are enforced by the database (migration
+`20261014090000_setup_write_rate_limits.sql`): at most 5 new setups and 60 writes per
+account per hour, on top of the 25-setup cap. Edits made in the dashboard are not limited.
+
+The rest is dashboard configuration:
+
+1. **Human check on email sign-in (Cloudflare Turnstile, free).** Without it, anyone can
+   use the sign-in form to send magic-link emails to any address.
+   1. In Cloudflare, open **Turnstile**, add a widget for `kitloom.site`, your
+      `*.pages.dev` host and `localhost` (mode: Managed). You get a site key and a secret key.
+   2. Add the **site key** as `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in Cloudflare Pages (Production
+      and Preview) and in `.env.local`, then redeploy. The widget appears on `/signin`.
+   3. Only then, in Supabase **Authentication → Attack Protection**, enable CAPTCHA
+      protection, choose Turnstile and paste the **secret key**. In the other order, email
+      sign-in fails until the site is redeployed.
+
+   OAuth sign-in (GitHub, Google) is not affected; those providers do their own checks.
+2. **Redirect allowlist.** Keep **Authentication → URL Configuration → Redirect URLs** to
+   the exact `/auth/callback` addresses listed above. Do not add wildcards such as
+   `https://*.pages.dev/**`, which would let any Pages site receive sign-in codes.
+3. **Rate limits.** In **Authentication → Rate Limits**, keep the email limit low (for
+   example 30 per hour for the whole project) and keep the token-verification limits at
+   their defaults or lower.
+4. **Link lifetime.** In the Email provider settings, set the one-time link expiry to
+   15 minutes (900 seconds) or less.
+5. **Passwords.** Kitloom never offers passwords, but Supabase's email provider still
+   accepts a password sign-up sent straight to its API. If your plan offers it, enable
+   leaked-password protection so such accounts at least cannot use known-breached
+   passwords.
+
 ### Checking the access rules
 
 After any change to tables or policies, run `supabase/tests/rls.sql` in the SQL editor. It
@@ -99,6 +132,7 @@ The source is at https://github.com/IHANsaja/kitloom (public, default branch `ma
    |---|---|
    | `NEXT_PUBLIC_SUPABASE_URL` | `https://xwoekncvlylaohjxrkgf.supabase.co` |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the `sb_publishable_…` key |
+   | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | optional: the Turnstile site key (see Abuse protection) |
 
    If the build picks an older Node.js despite `.node-version`, also add `NODE_VERSION` = `22`.
 5. Save and deploy. Check the build log for the Next.js route table.
@@ -111,9 +145,13 @@ On the `*.pages.dev` URL, check:
 
 - `/`, `/explore`, `/publish`, `/about` load.
 - `/explore` lists the setups in the database, and opening one shows its README and files.
-- **Download ZIP** on a setup downloads `<repo>-<branch>.zip` from github.com.
+- **Check and download** on a setup opens Heddle, which scans the latest commit (a few
+  seconds) and then offers `<repo>-<commit>.zip` from github.com.
 - `/does-not-exist` returns the Kitloom 404 page with status 404.
 - `/explore?agent=cursor` opens with the Cursor filter selected.
+- Response headers on any page include `Strict-Transport-Security`, `Cross-Origin-Opener-Policy`
+  and `Content-Security-Policy: frame-ancestors 'none'…`, and the page source has a
+  `<meta http-equiv="Content-Security-Policy">` tag. The browser console shows no CSP errors.
 - `/signin` shows the sign-in methods you enabled, and signing in lands on `/account`.
 - Publishing a test setup from `/publish` shows it at `/setup?slug=…` and in `/explore`,
   and deleting it from `/account` removes it.
