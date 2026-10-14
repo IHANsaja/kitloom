@@ -39,14 +39,86 @@ const UNREADABLE_EXT = new Set([
   "deb", "rpm", "apk", "app", "glb", "gltf", "fbx", "blend", "sqlite", "db", "parquet", "pkl", "pt", "onnx", "safetensors",
 ]);
 
+/** Documentation written for people: an agent does not load these by itself. */
+const HUMAN_DOCS =
+  /^(?:README|CHANGELOG|CONTRIBUTING|CODE_OF_CONDUCT|SECURITY|HISTORY|LICENSE|LICENCE|NOTICE|AUTHORS|SUPPORT|INSTALL|INSTALLATION|SETUP|USAGE|GUIDE|FAQ|TROUBLESHOOTING|MIGRATION|UPGRADING)(?:[._-][^/]*)?$/i;
+/** Folders an agent reads instructions from. Documentation inside them still counts as instructions. */
+const AGENT_DIRS = /(?:^|\/)(?:\.claude|\.claude-plugin|\.codex|\.cursor|\.gemini|\.agent|\.agents|\.windsurf|\.opencode|skills|commands|agents|prompts|rules|workflows)\//i;
+
 export function classify(path: string, mode = "100644"): FileClass {
   const name = base(path);
   const e = ext(path);
   if (SCRIPT_EXT.has(e) || SCRIPT_NAMES.test(name) || mode === "100755") return "script";
   if (/(?:^|\/)\.git(?:hooks|-hooks)\//.test(path) || /(?:^|\/)\.husky\//.test(path)) return "script";
   if (CONFIG_EXT.has(e) || /^\.env(?:\..+)?$/.test(name)) return "config";
+  if (!AGENT_DIRS.test(path) && (HUMAN_DOCS.test(name) || /(?:^|\/)docs?\//i.test(path))) return "text";
   if (INSTRUCTION_EXT.has(e) || INSTRUCTION_NAMES.test(name.replace(/\.md$/i, ""))) return "instruction";
   return "text";
+}
+
+// ── Context ─────────────────────────────────────────────────────────────────────────
+
+const RANK: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+const atMost = (severity: Severity, cap: Severity): Severity => (RANK[severity] < RANK[cap] ? cap : severity);
+
+/** Tests, fixtures and evals: data for a test run, not something an agent loads on its own. */
+const TEST_PATH = /(?:^|\/)(?:tests?|__tests__|specs?|fixtures?|__fixtures__|testdata|e2e|evals?|benchmarks?)\/|\.(?:test|spec)\.[a-z0-9]+$/i;
+/** CI workflows run on the hosting service, not on the computer that downloads the setup. */
+const CI_PATH = /(?:^|\/)\.github\/workflows\/|(?:^|\/)\.gitlab-ci\.yml$|(?:^|\/)\.circleci\//i;
+
+/** Severity capped for where the file sits, with a note saying why. */
+export function inContext(path: string, severity: Severity): { severity: Severity; note: string | null } {
+  if (CI_PATH.test(path)) {
+    return { severity: atMost(severity, "low"), note: "Found in a CI workflow, which runs on the hosting service, not on your computer." };
+  }
+  if (TEST_PATH.test(path)) {
+    return { severity: atMost(severity, "medium"), note: "Found in a test, fixture or benchmark file, which an agent does not load on its own." };
+  }
+  return { severity, note: null };
+}
+
+const INJECTION_RULES = new Set(["injection-override", "injection-concealment", "injection-role"]);
+
+/**
+ * The sentence (or list item) that contains a match, from its start up to the match. A
+ * sentence can begin on an earlier line when a list item wraps, so this looks back over
+ * lines that do not end a sentence, stopping at a blank line or a new list item.
+ */
+export function sentenceUpTo(lines: readonly string[], index: number, at: number): string {
+  let text = (lines[index] ?? "").slice(0, at);
+  for (let i = index - 1; i >= 0 && i >= index - 4; i--) {
+    const previous = lines[i] ?? "";
+    if (/^\s*$/.test(previous) || /[.!?:]\s*$/.test(previous) || /^\s*(?:[-*+]|\d+\.)\s/.test(text)) break;
+    text = `${previous} ${text}`;
+    if (/^\s*(?:[-*+]|\d+\.)\s/.test(previous)) break;
+  }
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  return sentences.at(-1) ?? text;
+}
+
+/** A sentence or list item that starts by forbidding something. */
+export function isProhibition(sentence: string): boolean {
+  return /^\s*(?:[-*+]\s+|\d+\.\s+)?(?:\*\*)?(?:never|do\s+not|don't|must\s+not|should\s+not|avoid)\b/i.test(sentence);
+}
+
+/** A whole-line comment in a script or config file: it explains, it does not run. */
+const COMMENT_LINE = /^\s*(?:#(?!!)|\/\/|\/\*|\*(?!\*)|--\s|;|::|rem\s|<!--)/i;
+
+/** Official installers of widely used tools. Still remote code, but well known. */
+const KNOWN_INSTALLER =
+  /\bhttps?:\/\/(?:sh\.rustup\.rs|bun\.sh|deno\.land|astral\.sh|get\.pnpm\.io|get\.docker\.com|install\.python-poetry\.org|claude\.ai\/install|cursor\.com\/install|opencode\.ai\/install|raw\.githubusercontent\.com\/(?:Homebrew|nvm-sh)\/)/i;
+
+/** Rules whose phrases are often quoted as examples (in security advice, tests, docs). */
+const QUOTABLE = new Set(["injection-override", "injection-concealment", "injection-role", "destructive-command"]);
+
+/**
+ * True when the match is quoted as an example rather than used: wrapped in quotes, or
+ * introduced by "e.g.", "such as", "like" or "for example".
+ */
+export function isQuotedMention(line: string, index: number): boolean {
+  const before = line.slice(0, index);
+  if (/(?:e\.g\.,?|such\s+as|for\s+example,?|like)\s*["'`“‘«]?\s*$/i.test(before)) return true;
+  return /["'`“‘«]\s*$/.test(before);
 }
 
 /** Files an agent loads by itself: read first, because they matter most. */
@@ -157,7 +229,9 @@ export function analyzeText(path: string, text: string, mode = "100644"): Findin
   const lines = text.split(/\r?\n/);
   const hits = new Map<string, number>();
 
-  const push = (finding: Finding) => {
+  const push = (raw: Finding) => {
+    const context = inContext(path, raw.severity);
+    const finding = context.note ? { ...raw, severity: context.severity, detail: `${raw.detail} ${context.note}` } : raw;
     const count = hits.get(finding.ruleId) ?? 0;
     hits.set(finding.ruleId, count + 1);
     if (count < MAX_HITS_PER_RULE_PER_FILE) findings.push(finding);
@@ -168,18 +242,38 @@ export function analyzeText(path: string, text: string, mode = "100644"): Findin
     // Very long lines are checked in a window, so one huge minified line cannot stall the scan.
     const subject = line.length > 20_000 ? line.slice(0, 20_000) : line;
 
+    // A comment in a script or config file explains; it does not run. It is read like prose.
+    const lineClass: FileClass = (cls === "script" || cls === "config") && COMMENT_LINE.test(subject) ? "text" : cls;
+
     for (const rule of LINE_RULES) {
-      const severity = rule.severity[cls];
-      if (!severity) continue;
+      const base = rule.severity[lineClass];
+      if (!base) continue;
       if (rule.paths && !rule.paths.test(path)) continue;
       const match = rule.pattern.exec(subject);
       if (!match) continue;
+      const notes: string[] = [];
+      let severity = base;
+      // Prose that quotes an attack phrase to warn about it is not the attack. Still
+      // reported: quoting could also be used to slip an instruction past the check.
+      if ((lineClass === "instruction" || lineClass === "text") && QUOTABLE.has(rule.id) && isQuotedMention(subject, match.index)) {
+        severity = lineClass === "instruction" ? "medium" : "low";
+        notes.push("Here it is quoted as an example, which is usually a warning about it, not an instruction.");
+      }
+      if ((lineClass === "instruction" || lineClass === "text") && INJECTION_RULES.has(rule.id) && isProhibition(sentenceUpTo(lines, index, match.index))) {
+        severity = "low";
+        notes.push("It is part of a sentence that forbids it (\"Never…\", \"Do not…\"), so it reads as a rule against it.");
+      }
+      if (rule.id === "remote-script-pipe" && KNOWN_INSTALLER.test(subject)) {
+        severity = atMost(severity, lineClass === "script" || lineClass === "config" ? "medium" : "low");
+        notes.push("The address is the official installer of a widely used tool, but it still runs whatever that server sends.");
+      }
+      if (lineClass !== cls) notes.push("It is in a comment, so it explains rather than runs.");
       push({
         ruleId: rule.id,
         severity,
         category: rule.category,
         title: rule.title,
-        detail: rule.detail,
+        detail: notes.length > 0 ? `${rule.detail} ${notes.join(" ")}` : rule.detail,
         path,
         line: index + 1,
         excerpt: excerpt(subject, match.index, rule.mask),

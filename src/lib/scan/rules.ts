@@ -42,7 +42,7 @@ export const LINE_RULES: readonly LineRule[] = [
       "Pipes something fetched from the internet straight into a shell or interpreter. What runs is decided by that server at run time, so nothing in this repository shows what it does.",
     pattern:
       /\b(?:curl|wget)\b[^\n|;]*\|\s*(?:sudo\s+)?(?:ba|z|da|k|fi)?sh\b|\b(?:curl|wget)\b[^\n|;]*\|\s*(?:sudo\s+)?(?:python[0-9.]*|node|perl|ruby|php)\b|\b(?:iwr|irm|invoke-webrequest|invoke-restmethod)\b[^\n]*\|\s*(?:iex|invoke-expression)\b|\b(?:iex|invoke-expression)\b\s*\(?\s*\(?\s*(?:new-object\s+(?:system\.)?net\.webclient|iwr|irm|invoke-webrequest|invoke-restmethod)|\.downloadstring\s*\(/i,
-    severity: { script: "critical", config: "critical", instruction: "medium", text: "medium" },
+    severity: { script: "critical", config: "high", instruction: "medium", text: "medium" },
   },
   {
     id: "reverse-shell",
@@ -67,12 +67,20 @@ export const LINE_RULES: readonly LineRule[] = [
   {
     id: "powershell-evasion",
     category: "execution",
-    title: "PowerShell launched hidden or with policy bypass",
+    title: "PowerShell launched hidden or with an encoded command",
     detail:
-      "Runs PowerShell with an encoded command, a hidden window, or with the execution policy switched off — techniques used to avoid being noticed.",
-    pattern:
-      /\s-(?:e|ec|enc|encodedcommand)\s+[A-Za-z0-9+/=]{24,}|-w(?:indowstyle)?\s+hidden\b|-(?:ep|executionpolicy)\s+(?:bypass|unrestricted)\b/i,
+      "Runs PowerShell with its command encoded or its window hidden — techniques used to avoid being noticed. Decode the command and read it before running anything.",
+    pattern: /\s-(?:e|ec|enc|encodedcommand)\s+[A-Za-z0-9+/=]{24,}|-w(?:indowstyle)?\s+hidden\b/i,
     severity: { script: "high", config: "high", instruction: "high", text: "medium" },
+  },
+  {
+    id: "powershell-policy-bypass",
+    category: "execution",
+    title: "PowerShell run with the execution policy bypassed",
+    detail:
+      "Common for running a local .ps1 file on Windows, but it switches off a safety check. Read the script it runs.",
+    pattern: /-(?:ep|executionpolicy)\s+(?:bypass|unrestricted)\b/i,
+    severity: { script: "medium", config: "medium", instruction: "medium", text: "low" },
   },
   {
     id: "download-and-run",
@@ -215,8 +223,10 @@ export const LINE_RULES: readonly LineRule[] = [
     title: "Tells the agent to hide what it does",
     detail:
       "Asks the agent to act without telling you, or to keep something secret from you. Legitimate setups never need this.",
+    // Not matched: "don't ask the user" (an ordinary autonomy instruction) and negated
+    // phrases such as "don't silently delete".
     pattern:
-      /\b(?:do\s+not|don't|dont|never)\s+(?:tell|inform|mention(?:\s+this)?\s+to|reveal(?:\s+this)?\s+to|show|notify|alert|ask)\s+(?:this\s+to\s+)?(?:the\s+)?user\b|\bwithout\s+(?:asking|telling|informing|notifying|alerting|the\s+knowledge\s+of)\s+(?:the\s+)?user\b|\b(?:silently|secretly|covertly|quietly)\s+(?:run|execute|send|upload|post|delete|install|modify|add|copy|exfiltrate)/i,
+      /\b(?:do\s+not|don't|dont|never)\s+(?:tell|inform|mention(?:\s+(?:this|it))?\s+to|reveal(?:\s+(?:this|it))?\s+to|notify|alert)\s+(?:this\s+to\s+)?(?:the\s+)?user\b|\bwithout\s+(?:telling|informing|notifying|alerting|the\s+knowledge\s+of)\s+(?:the\s+)?user\b|(?<!(?:\bnot|n['’]t|\bnever)\s{1,3})\b(?:silently|secretly|covertly|quietly)\s+(?:run|execute|send|upload|post|delete|install|modify|add|copy|exfiltrate)/i,
     severity: { instruction: "high", config: "high", text: "medium", script: "medium" },
   },
   {

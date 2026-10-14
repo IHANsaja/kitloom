@@ -15,3 +15,6 @@ Thumbs.db
 npm-debug.log*
 .vercel/
 .wrangler/
+
+# Launch-setup discovery output (scripts/discover). Candidate data, never committed.
+discovery/
