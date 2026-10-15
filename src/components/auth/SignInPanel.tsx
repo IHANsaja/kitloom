@@ -166,7 +166,7 @@ export function SignInPanel() {
           email: address,
           options: { emailRedirectTo: callbackUrl(next), shouldCreateUser: true, captchaToken: captchaOption },
         });
-        if (failure) setError(explainAuthError(failure, "reset"));
+        if (failure) setError(explainAuthError(failure, "link"));
         else {
           setSent({ kind: "link", to: address });
           toast.success("Sign-in link sent", { description: address });
