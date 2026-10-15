@@ -6,7 +6,8 @@ import { Band } from "@/components/ui/Frame";
 import { buttonClass } from "@/components/ui/styles";
 import { AGENTS } from "@/lib/catalog/taxonomy";
 import { ScrollThread } from "@/components/motion/Ambient";
-import { KitOrbit } from "@/components/motion/Scenes";
+import { PurlNook } from "@/components/pet/PurlNook";
+import { PurlWorkshop } from "@/components/pet/PurlWorkshop";
 
 export const metadata: Metadata = {
   title: "About",
@@ -171,13 +172,13 @@ export default function AboutPage() {
             <p className="eyebrow text-fg-3">About</p>
             <h1 className="mt-2 max-w-[22ch] text-h1 text-balance">A plain directory for agent setups</h1>
           </div>
-          <KitOrbit className="hidden md:block" />
+          <PurlWorkshop className="hidden lg:block" />
         </div>
       </Band>
       <Band as="div">
         <div className="lg:grid lg:grid-cols-12">
-          <nav aria-label="On this page" className="cell-x border-b border-line py-6 lg:col-span-3 lg:border-r lg:border-b-0">
-            <div className="lg:sticky lg:top-24 lg:flex lg:gap-4">
+          <nav aria-label="On this page" className="cell-x border-b border-line py-6 lg:relative lg:col-span-3 lg:border-r lg:border-b-0">
+            <div data-pet-roof className="lg:sticky lg:top-24 lg:flex lg:gap-4">
             <ScrollThread target="#about-content" className="hidden shrink-0 lg:block" />
             <ol className="space-y-2">
               {SECTIONS.map((section, index) => (
@@ -190,6 +191,7 @@ export default function AboutPage() {
               ))}
             </ol>
             </div>
+            <PurlNook knit="#about-content" />
           </nav>
           <div id="about-content" className="lg:col-span-9">
             {SECTIONS.map((section) => (

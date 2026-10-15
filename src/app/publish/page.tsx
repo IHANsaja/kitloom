@@ -6,6 +6,7 @@ import { PublishForm } from "@/components/publish/PublishForm";
 import { Band } from "@/components/ui/Frame";
 import { Notice } from "@/components/ui/Notice";
 import { Stitch } from "@/components/motion/Illustrations";
+import { PurlNook } from "@/components/pet/PurlNook";
 
 export const metadata: Metadata = {
   title: "Publish a setup",
@@ -66,40 +67,43 @@ export default function PublishPage() {
             </Suspense>
           </div>
 
-          <aside aria-labelledby="checklist-title" className="cell-x border-t border-line py-8 lg:col-span-4 lg:border-t-0 lg:px-6 lg:py-10">
-            <h2 id="checklist-title" className="text-h2">
-              Before you publish
-            </h2>
-            <ol className="mt-5 border-t border-line-subtle">
-              {CHECKLIST.map((item, index) => (
-                <li key={item.title} className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-2 border-b border-line-subtle py-3.5">
-                  <span aria-hidden="true" className="pt-0.5 font-mono text-xs text-fg-3 tabular-nums">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-fg-2">{item.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+          <aside aria-labelledby="checklist-title" className="cell-x border-t border-line py-8 lg:relative lg:col-span-4 lg:border-t-0 lg:px-6 lg:py-10">
+            <div data-pet-roof>
+              <h2 id="checklist-title" className="text-h2">
+                Before you publish
+              </h2>
+              <ol className="mt-5 border-t border-line-subtle">
+                {CHECKLIST.map((item, index) => (
+                  <li key={item.title} className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-2 border-b border-line-subtle py-3.5">
+                    <span aria-hidden="true" className="pt-0.5 font-mono text-xs text-fg-3 tabular-nums">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold">{item.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-fg-2">{item.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
 
-            <Notice tone="info" className="mt-6" label="Why a link and not an upload?">
-              <p>
-                Kitloom does not store package files yet. Linking to GitHub keeps your setup under
-                your control, with its history visible to anyone who wants to check it. Because the
-                ZIP follows your repository, it has no fixed checksum.
+              <Notice tone="info" className="mt-6" label="Why a link and not an upload?">
+                <p>
+                  Kitloom does not store package files yet. Linking to GitHub keeps your setup under
+                  your control, with its history visible to anyone who wants to check it. Because the
+                  ZIP follows your repository, it has no fixed checksum.
+                </p>
+              </Notice>
+
+              <p className="mt-6 text-sm leading-relaxed text-fg-2">
+                Listings appear as soon as you publish. Maintainers can hide one that contains
+                secrets, malware, or someone else&apos;s work. More on the{" "}
+                <Link href="/about#security" className="link">
+                  About page
+                </Link>
+                .
               </p>
-            </Notice>
-
-            <p className="mt-6 text-sm leading-relaxed text-fg-2">
-              Listings appear as soon as you publish. Maintainers can hide one that contains
-              secrets, malware, or someone else&apos;s work. More on the{" "}
-              <Link href="/about#security" className="link">
-                About page
-              </Link>
-              .
-            </p>
+            </div>
+            <PurlNook />
           </aside>
         </div>
       </Band>

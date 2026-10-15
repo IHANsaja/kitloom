@@ -13,8 +13,24 @@ import { AGENTS, type AgentDefinition } from "@/lib/catalog/taxonomy";
 import { useSetups } from "@/lib/community/useSetups";
 import { pluralize } from "@/lib/format";
 import type { SetupSummary } from "@/types/catalog";
+import { PurlPlaymate } from "@/components/pet/PurlPlaymate";
+import { AgentLogo } from "@/components/ui/AgentLogo";
 
 const PREVIEW = 3;
+
+/** Each agent's tile: its logo, and the thing Purl plays with on this page. */
+function AgentMark({ agent }: { agent: AgentDefinition }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-agent-mark={agent.id}
+      className="kl-mark relative grid size-11 shrink-0 place-items-center self-end border border-line-control bg-carbon text-fg"
+    >
+      <AgentLogo id={agent.id} size={24} />
+      <span className="absolute -right-px -bottom-px size-1.5 bg-fg-3" />
+    </span>
+  );
+}
 
 /** Agents grouped as "other" on Explore do not have their own filter, so link by name. */
 function browseHref(agent: AgentDefinition): string {
@@ -24,14 +40,17 @@ function browseHref(agent: AgentDefinition): string {
 function AgentRow({ agent, index, setups, ready }: { agent: AgentDefinition; index: number; setups: SetupSummary[]; ready: boolean }) {
   const count = setups.length;
   return (
-    <li data-glide className="border-b border-line last:border-b-0">
+    <li data-glide data-agent-row={agent.id} className="border-b border-line last:border-b-0">
       <article aria-labelledby={`agent-${agent.id}`} className="lg:grid lg:grid-cols-12">
-        <div className="cell-x py-6 lg:col-span-4 lg:border-r lg:border-line">
-          <p className="font-mono text-xs text-fg-3 tabular-nums">{String(index + 1).padStart(2, "0")}</p>
-          <h2 id={`agent-${agent.id}`} className="mt-2 text-h2">
-            {agent.name}
-          </h2>
-          <p className="mt-1 font-mono text-xs text-fg-2">{agent.vendor}</p>
+        <div className="cell-x flex justify-between gap-4 py-6 lg:col-span-4 lg:border-r lg:border-line">
+          <div className="min-w-0">
+            <p className="font-mono text-xs text-fg-3 tabular-nums">{String(index + 1).padStart(2, "0")}</p>
+            <h2 id={`agent-${agent.id}`} className="mt-2 text-h2">
+              {agent.name}
+            </h2>
+            <p className="mt-1 font-mono text-xs text-fg-2">{agent.vendor}</p>
+          </div>
+          <AgentMark agent={agent} />
         </div>
 
         <div className="cell-x min-w-0 border-t border-line-subtle py-6 lg:col-span-5 lg:border-t-0 lg:border-r lg:border-line lg:px-6">
@@ -96,11 +115,13 @@ export function AgentsDirectory() {
           </Notice>
         </div>
       ) : null}
-      <ol ref={glide}>
-        {AGENTS.map((agent, index) => (
-          <AgentRow key={agent.id} agent={agent} index={index} ready={ready} setups={setups.filter((setup) => setup.agents.includes(agent.id))} />
-        ))}
-      </ol>
+      <PurlPlaymate>
+        <ol ref={glide}>
+          {AGENTS.map((agent, index) => (
+            <AgentRow key={agent.id} agent={agent} index={index} ready={ready} setups={setups.filter((setup) => setup.agents.includes(agent.id))} />
+          ))}
+        </ol>
+      </PurlPlaymate>
     </>
   );
 }

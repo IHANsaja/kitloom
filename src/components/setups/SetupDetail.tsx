@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FileTree } from "@/components/files/FileTree";
 import { ReadmePreview } from "@/components/files/ReadmePreview";
 import { totalBytes } from "@/components/files/tree";
+import { PurlNook } from "@/components/pet/PurlNook";
+import { AgentLogo } from "@/components/ui/AgentLogo";
 import { DownloadButton } from "@/components/setups/DownloadButton";
 import { InstallSteps } from "@/components/setups/InstallSteps";
 import { Band } from "@/components/ui/Frame";
@@ -116,8 +118,8 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
 
       <Band as="div">
         <div className="lg:grid lg:grid-cols-12">
-          <aside aria-label="Package details" className="border-b border-line lg:order-2 lg:col-span-4 lg:border-b-0">
-            <div className="lg:sticky lg:top-14 lg:max-h-[calc(100dvh-3.5rem)] lg:overflow-y-auto">
+          <aside aria-label="Package details" className="border-b border-line lg:relative lg:order-2 lg:col-span-4 lg:border-b-0">
+            <div data-pet-roof className="lg:sticky lg:top-14 lg:max-h-[calc(100dvh-3.5rem)] lg:overflow-y-auto">
               <div className="cell-x border-b border-line py-6 lg:px-6">
                 {access.kind === "free" ? (
                   <>
@@ -154,9 +156,12 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                 <ul className="mt-2.5 space-y-2">
                   {setup.agents.map((agent) => (
                     <li key={agent.id} className="flex items-baseline justify-between gap-4 text-sm">
-                      <Link href={exploreHref({ agent: agent.id })} className="link">
-                        {getAgent(agent.id).name}
-                      </Link>
+                      <span className="flex items-baseline gap-2">
+                        <AgentLogo id={agent.id} size={14} className="translate-y-0.5 text-fg-2" />
+                        <Link href={exploreHref({ agent: agent.id })} className="link">
+                          {getAgent(agent.id).name}
+                        </Link>
+                      </span>
                       {agent.compatibility === "tested" ? (
                         <span className="flex items-center gap-1.5 font-mono text-xs text-success">
                           <Icon name="check" size={12} />
@@ -236,6 +241,7 @@ export function SetupDetail({ setup, banner }: SetupDetailProps) {
                 </Notice>
               </div>
             </div>
+            <PurlNook />
           </aside>
 
           <div className="min-w-0 lg:order-1 lg:col-span-8 lg:border-r lg:border-line">

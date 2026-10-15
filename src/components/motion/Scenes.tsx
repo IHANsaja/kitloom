@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { WeaveField } from "@/components/motion/Ambient";
-import { KitUnfold } from "@/components/motion/Illustrations";
 import type { SceneHandle, SceneName } from "@/components/motion/tsl/scenes";
 import { cx } from "@/components/ui/styles";
 
@@ -86,9 +85,4 @@ function TslScene({ name, fallback, className }: TslSceneProps) {
 /** Home hero backdrop: the SVG loom, upgraded to a rippling woven sheet. */
 export function HeroBackdrop() {
   return <TslScene name="loom" className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_right,transparent_18%,black_88%)]" fallback={<WeaveField className="h-full w-full" />} />;
-}
-
-/** About: a kit and the files that orbit it. */
-export function KitOrbit({ className }: { className?: string }) {
-  return <TslScene name="kit" className={cx("relative h-[170px] w-[240px] shrink-0", className)} fallback={<KitUnfold className="h-full w-full" />} />;
 }

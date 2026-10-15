@@ -6,6 +6,7 @@ import { GeistSans } from "geist/font/sans";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Gutters } from "@/components/motion/Strings";
+import { PurlPreloader } from "@/components/pet/PurlPreloader";
 import { Toaster } from "@/components/ui/Toaster";
 import { site } from "@/lib/site";
 
@@ -37,13 +38,16 @@ export const viewport: Viewport = {
 
 // Marks the document as script-enabled before first paint, so entrance animations can
 // pre-hide their items without ever hiding content from visitors without JavaScript.
-const JS_FLAG = "document.documentElement.classList.add('js')";
+// Also shows the Purl preloader only once per browser session.
+const JS_FLAG =
+  "var d=document.documentElement;d.classList.add('js');try{if(sessionStorage.getItem('kl-pre'))d.classList.add('kl-pre-seen');else sessionStorage.setItem('kl-pre','1')}catch(e){}";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body className="flex flex-col">
         <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
+        <PurlPreloader />
         <a
           href="#main"
           className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-2 focus-visible:left-2 focus-visible:z-50 focus-visible:rounded-xs focus-visible:bg-lime focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm focus-visible:font-semibold focus-visible:text-carbon"

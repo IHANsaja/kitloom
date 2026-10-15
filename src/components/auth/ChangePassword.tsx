@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 import { buttonClass } from "@/components/ui/styles";
 import { explainAuthError, PASSWORD_MIN, passwordProblem } from "@/lib/supabase/password";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { cheerPurl } from "@/components/pet/cheer";
 
 /**
  * Set or change the account password. Accounts created with GitHub, Google or an emailed
@@ -37,6 +38,7 @@ export function ChangePassword({ recovering = false }: { recovering?: boolean })
     }
     setPassword("");
     setConfirm("");
+    cheerPurl();
     toast.success("Password saved", { description: "You can now sign in with your email and this password." });
   }
 

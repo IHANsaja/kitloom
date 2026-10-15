@@ -13,7 +13,8 @@ import { Icon } from "@/components/ui/Icon";
 import { buttonClass } from "@/components/ui/styles";
 import { exploreHref } from "@/lib/catalog/query";
 import { setupHref } from "@/lib/catalog/summary";
-import { AGENT_FILTERS, CATEGORIES, matchesAgentFilter } from "@/lib/catalog/taxonomy";
+import { AGENT_FILTERS, CATEGORIES, isAgentId, matchesAgentFilter } from "@/lib/catalog/taxonomy";
+import { AgentLogo } from "@/components/ui/AgentLogo";
 import { fetchLatestSetup } from "@/lib/community/setups";
 import { useSetups, type SetupsState } from "@/lib/community/useSetups";
 import { formatBytes, pluralize } from "@/lib/format";
@@ -52,7 +53,10 @@ export function AgentCells() {
         <li key={filter.id} className="bg-carbon">
           <Link href={exploreHref({ agent: filter.id })} data-glide className={cellLink}>
             <span className="flex items-start justify-between gap-2">
-              <span className="font-semibold tracking-[-0.01em]">{filter.label}</span>
+              <span className="flex items-center gap-2.5 font-semibold tracking-[-0.01em]">
+                {isAgentId(filter.id) ? <AgentLogo id={filter.id} size={18} className="text-fg-2 transition-colors duration-150 ease-kit group-hover:text-lime" /> : null}
+                {filter.label}
+              </span>
               <Icon name="arrow-up-right" size={14} className="mt-1 shrink-0 text-fg-3 transition duration-150 ease-kit group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-lime" />
             </span>
             <span className="mt-4 font-mono text-xs text-fg-2 tabular-nums">

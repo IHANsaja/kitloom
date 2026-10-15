@@ -11,6 +11,8 @@ import { useGlide } from "@/components/motion/useGlide";
 import { SortSelect } from "@/components/filters/SortSelect";
 import { SearchInput } from "@/components/search/SearchInput";
 import { SetupGrid } from "@/components/setups/SetupCell";
+import { PurlNook } from "@/components/pet/PurlNook";
+import { AgentLogo } from "@/components/ui/AgentLogo";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
@@ -27,7 +29,7 @@ import {
   tokenize,
   type SetupQuery,
 } from "@/lib/catalog/query";
-import { AGENT_FILTERS, CATEGORIES } from "@/lib/catalog/taxonomy";
+import { AGENT_FILTERS, CATEGORIES, isAgentId } from "@/lib/catalog/taxonomy";
 import { useSetups } from "@/lib/community/useSetups";
 import { pluralize } from "@/lib/format";
 import { LoadingLine } from "@/components/motion/Strings";
@@ -120,7 +122,7 @@ export function ExploreClient() {
 
   return (
     <div className="lg:grid lg:grid-cols-12">
-      <div className="lg:col-span-3 lg:border-r lg:border-line">
+      <div className="lg:relative lg:col-span-3 lg:border-r lg:border-line">
         <div className="cell-x border-b border-line py-3 lg:hidden">
           <button
             type="button"
@@ -141,6 +143,7 @@ export function ExploreClient() {
         <aside
           ref={filterGlide}
           id="explore-filters"
+          data-pet-roof
           aria-label="Filters"
           className={cx("lg:sticky lg:top-14 lg:block lg:max-h-[calc(100dvh-3.5rem)] lg:overflow-y-auto", !filtersOpen && "hidden")}
         >
@@ -148,7 +151,8 @@ export function ExploreClient() {
             legend="Agent"
             allLabel="All agents"
             allCount={unfilteredByAgent}
-            options={AGENT_FILTERS.map((f) => ({ id: f.id, label: f.label, hint: f.hint, count: facets.agents[f.id] }))}
+            options={AGENT_FILTERS.map((f) => ({ id: f.id, label: f.label, hint: f.hint, count: facets.agents[f.id], icon: isAgentId(f.id) ? <AgentLogo id={f.id} /> : null }))}
+            icons
             selected={query.agent}
             onSelect={(agent) => update({ agent })}
             pending={state !== "ready"}
@@ -171,6 +175,7 @@ export function ExploreClient() {
             </div>
           ) : null}
         </aside>
+        <PurlNook />
       </div>
 
       <div className="min-w-0 lg:col-span-9">

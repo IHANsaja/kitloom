@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { buttonClass, inputClass } from "@/components/ui/styles";
 import { invalidateSetups } from "@/lib/community/useSetups";
 import { BIO_MAX, ProfileError, updateOwnProfile, validateProfile, type OwnProfile, type ProfileInput } from "@/lib/community/profiles";
+import { cheerPurl } from "@/components/pet/cheer";
 
 /** The public face of an account: display name, bio and website. */
 export function ProfileEditor({ userId, profile, onSaved }: { userId: string; profile: OwnProfile; onSaved: (next: OwnProfile) => void }) {
@@ -40,6 +41,7 @@ export function ProfileEditor({ userId, profile, onSaved }: { userId: string; pr
       onSaved(next);
       // Listings show the display name, so refresh them.
       invalidateSetups();
+      cheerPurl();
       toast.success("Profile saved");
     } catch (error) {
       const failure = error instanceof ProfileError ? error : new ProfileError("Your profile could not be saved.");

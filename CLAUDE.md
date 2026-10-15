@@ -115,6 +115,7 @@ src/lib/community/               Supabase-backed setups: API, row mapping, valid
 src/lib/packages/                URL safety, path safety, download access, content classifier
 src/lib/scan/                    Heddle, the pre-download check: rules.ts, analyze.ts (pure), heddle.ts (fetching)
 src/components/scan/             The Heddle dialog, its report, and the StitchSampler animation
+src/components/pet/              Purl, the pixel-art lamb pet: sprites.ts (data), PurlSprite, PurlNook (behaviour)
 src/lib/supabase/                Browser client and session/auth helpers
 src/lib/site.ts                  Site-level config
 src/types/catalog.ts             Listing types

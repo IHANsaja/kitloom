@@ -368,6 +368,57 @@ same physics. Every page has at least one illustration, and each says something 
 | `StitchSampler` | Heddle download dialog | The scan as a cross-stitch sampler in a hoop: one stitch per slice of the repository's files. A lime needle runs back and forth along the rows, like one thread worked across the cloth, and sews a cross for every slice actually read; slices with findings are stitched in the finding's colour, and the faint thread behind shows the path. When the scan ends the needle is parked and a rule in the verdict's colour is drawn underneath. Pure CSS motion (no GSAP): positions come from real progress, so it is always correct and quicker than ambient loops |
 | `Gutters` (playable strings) | The margins outside the frame, every page, at 1520px and wider | Loom strings that react to the cursor: they bow away as it comes near, are plucked when it sweeps across, turn lime and vibrate until they settle, and pass movement to their neighbours |
 
+### 7.2a Purl, the pet
+
+Purl is Kitloom's pet: a pixel-art lamb (wool is where yarn starts; a purl is a knitting
+stitch) with a lime yarn scarf. Code: `src/components/pet/` — `sprites.ts` (pure pixel data,
+tested), `PurlSprite.tsx` (renders a pose), `PurlNook.tsx` (behaviour).
+
+| Where | Mode |
+|---|---|
+| Explore, under the filters | `PurlNook` gap |
+| Setup detail, under the package sidebar (visible when the sidebar is short) | `PurlNook` gap |
+| About, under the "On this page" nav | `PurlNook` gap, knitting: a lime scarf grows with reading progress through `#about-content`; at the end Purl holds it up with hearts |
+| Publish, under the checklist | `PurlNook` gap |
+| Footer, bottom bar | `PurlNook` lane |
+| Agents, the ledger | `PurlPlaymate`: Purl sits on an agent's logo tile. Hover another row and it drops what it is doing and flies there in one hop, faster the further it goes, re-aimed mid-air if the cursor moves on (moves are interruptible: `actor.interruptWhen`). On each visit it plays: bounces on the tile (which squashes), spins it (lands dizzy), boops it (it wobbles) or hugs it (hearts, the logo turns lime). Wanders to other tiles on screen and naps on one when the cursor is still |
+| About header | `PurlWorkshop`, a pixel diorama of the whole idea: Purl fetches yarn from a basket, the lime shuttle weaves cloth on the loom row by row, the cloth becomes a kit, Purl files it on the shelf (the directory); three kits fill the shelf, then it clears (`lg` and up) |
+| Account header, beside the spool (`xl` and up) | `PurlYarnBall`: says hello with a hop, chases a lime yarn ball and nudges it along, naps when left alone, and cheers when the profile or password is saved (`cheerPurl()` in `pet/cheer.ts`) |
+| Every page, first visit in a session | `PurlPreloader`: Purl trots across while a lime yarn unwinds behind it, hops on arrival, the curtain lifts |
+
+Scripted scenes (Agents, About header, Account) use `usePurlActor`: an async script of `walkTo`, `hop`,
+`pose`, `wait` and `hearts`, which only runs while the stage is on screen and stops on
+unmount.
+
+**Agent logos.** `src/components/ui/AgentLogo.tsx`: the vendors' single-colour ("mono") logos
+from [thesvg](https://thesvg.org) (`npx @thesvg/cli add <slug> --variant mono`), inlined and
+painted in `currentColor`, so they follow the theme: `fg-2`/`fg` at rest, lime when active.
+Aider is not in that library, so its mark is Kitloom's own drawing (a code bubble). Logos are
+trademarks of their owners and are used only to identify the agent beside its name, so they
+are decorative (`aria-hidden`). Used on the Agents tiles, the Explore agent filters, the home
+agent cells and the setup page's compatibility list. To refresh one, run the CLI into a
+scratch folder (not the repo) and copy the path data.
+
+**Preloader rules.** CSS only, so it plays before any script and always leaves by itself
+(about 1.6s), with or without JavaScript. It never takes pointer events, shows once per
+browser session (the root layout's inline script sets `html.kl-pre-seen`), and does not
+appear with reduced motion.
+
+- **Gap mode.** Put `<PurlNook />` last in a column with `lg:relative`, and mark the element
+  above the empty space with `data-pet-roof`. Purl measures the room between the two live as
+  the page scrolls or the column changes: plenty of room → it wanders, blinks, flicks an
+  ear, watches the cursor and dozes off (Zs) after 25s without pointer movement; room closing
+  in → an alarm mark, then scared (wide eyes, wool on end, ears up, trembling, sweat drop);
+  room almost gone → squashed flat to fit with `> <` eyes; room back → a hop of relief.
+- **Lane mode.** A fixed strip where Purl only wanders.
+- Hovering Purl makes it happy: `^ ^`, blushing, lime pixel hearts. Purl takes no pointer
+  events (hover is worked out from the cursor position), so it never blocks a control.
+- Decorative: `aria-hidden`, hidden below `lg`. Runs only while on screen and while the tab
+  is visible. With reduced motion it stands still and simply hides when the room is too small.
+- **Deliberate exceptions to §7.2:** Purl is pixel art with solid fills (wool `fg`, face
+  `line-control`, eyes `carbon`), not 1–2px line art, and it trembles when scared. Its lime is
+  limited to the scarf, the cheeks and the hearts. These exceptions are for Purl only.
+
 Rules for adding one:
 
 - Vocabulary is weaving and kits only: threads, warp, weft, shuttles, needles, knots,
@@ -386,13 +437,12 @@ Rules for adding one:
 
 ### 7.3 WebGL scenes (three.js TSL)
 
-Two small scenes written with three.js **TSL** node materials on its WebGL 2 backend, in
+One small scene written with three.js **TSL** node materials on its WebGL 2 backend, in
 `src/components/motion/tsl/scenes.ts`, mounted through `TslScene` in `Scenes.tsx`.
 
 | Scene | Where | Fallback |
 |---|---|---|
 | `loom` — a rippling woven sheet with lime weft threads | Home hero backdrop | `WeaveField` |
-| `kit` — an open kit frame with files in orbit | About header | `KitUnfold` |
 
 Rules:
 

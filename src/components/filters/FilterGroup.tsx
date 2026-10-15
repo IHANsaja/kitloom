@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { cx } from "@/components/ui/styles";
 
 export interface FilterOption<T extends string> {
@@ -5,6 +7,7 @@ export interface FilterOption<T extends string> {
   label: string;
   count: number;
   hint?: string;
+  icon?: ReactNode;
 }
 
 interface FilterGroupProps<T extends string> {
@@ -16,6 +19,8 @@ interface FilterGroupProps<T extends string> {
   onSelect: (id: T | null) => void;
   /** True until the listings have loaded: counts show a dash instead of a zero. */
   pending?: boolean;
+  /** Leave room for option icons, so labels line up with "All" (which has none). */
+  icons?: boolean;
 }
 
 interface RowProps {
@@ -24,10 +29,12 @@ interface RowProps {
   pressed: boolean;
   pending: boolean;
   hint?: string;
+  icon?: ReactNode;
+  icons: boolean;
   onClick: () => void;
 }
 
-function Row({ label, count, pressed, pending, hint, onClick }: RowProps) {
+function Row({ label, count, pressed, pending, hint, icon, icons, onClick }: RowProps) {
   return (
     <li>
       <button
@@ -41,7 +48,10 @@ function Row({ label, count, pressed, pending, hint, onClick }: RowProps) {
           pressed ? "border-l-lime bg-surface-2 text-fg" : "border-l-transparent text-fg-2 hover:bg-surface hover:text-fg",
         )}
       >
-        <span>{label}</span>
+        <span className="flex items-center gap-2.5">
+          {icons ? <span className="flex w-4 justify-center">{icon}</span> : null}
+          {label}
+        </span>
         <span className={cx("font-mono text-xs tabular-nums", pressed ? "text-fg" : "text-fg-2")}>
           {pending ? <span aria-hidden="true">—</span> : count}
           <span className="sr-only">{pending ? "Loading count" : count === 1 ? " setup" : " setups"}</span>
@@ -52,12 +62,12 @@ function Row({ label, count, pressed, pending, hint, onClick }: RowProps) {
 }
 
 /** IDE-sidebar style single-select filter. Counts are computed, never hand-written. */
-export function FilterGroup<T extends string>({ legend, allLabel, allCount, options, selected, onSelect, pending = false }: FilterGroupProps<T>) {
+export function FilterGroup<T extends string>({ legend, allLabel, allCount, options, selected, onSelect, pending = false, icons = false }: FilterGroupProps<T>) {
   return (
     <fieldset className="border-b border-line py-4">
       <legend className="eyebrow cell-x float-left mb-2 w-full text-fg-3 lg:text-fg-3">{legend}</legend>
       <ul className="clear-both">
-        <Row label={allLabel} count={allCount} pending={pending} pressed={selected === null} onClick={() => onSelect(null)} />
+        <Row label={allLabel} count={allCount} pending={pending} pressed={selected === null} icons={icons} onClick={() => onSelect(null)} />
         {options.map((option) => (
           <Row
             key={option.id}
@@ -65,6 +75,8 @@ export function FilterGroup<T extends string>({ legend, allLabel, allCount, opti
             count={option.count}
             pending={pending}
             hint={option.hint}
+            icon={option.icon}
+            icons={icons}
             pressed={selected === option.id}
             onClick={() => onSelect(selected === option.id ? null : option.id)}
           />

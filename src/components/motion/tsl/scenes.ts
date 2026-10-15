@@ -6,9 +6,9 @@
  * Colours are read from the design tokens at mount time; nothing here hard-codes a colour.
  */
 import * as THREE from "three/webgpu";
-import { abs, color, float, floor, fract, max, mix, positionLocal, sin, smoothstep, step, time, uv, vec2, vec3 } from "three/tsl";
+import { abs, color, floor, fract, max, mix, positionLocal, sin, smoothstep, step, time, uv, vec2, vec3 } from "three/tsl";
 
-export type SceneName = "loom" | "kit";
+export type SceneName = "loom";
 
 export interface SceneHandle {
   setRunning(running: boolean): void;
@@ -61,43 +61,7 @@ const loom: Builder = (scene, camera) => {
   return () => undefined;
 };
 
-/** About: a kit as an open frame, with its files in orbit around it. */
-const kit: Builder = (scene, camera) => {
-  const outline = (tint: THREE.Color, inner: number) => {
-    const material = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
-    const edge = smoothstep(inner, 0.5, max(abs(uv().x.sub(0.5)), abs(uv().y.sub(0.5))));
-    material.colorNode = color(tint);
-    material.opacityNode = mix(float(0.05), float(1), edge);
-    return material;
-  };
-
-  const group = new THREE.Group();
-  const box = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.7, 1.7), outline(token("--color-lime"), 0.465));
-  group.add(box);
-
-  const sheetMaterial = outline(token("--color-fg-2"), 0.44);
-  const sheets = [0, 1, 2, 3].map((index) => {
-    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.66), sheetMaterial);
-    sheet.userData.phase = (index / 4) * Math.PI * 2;
-    group.add(sheet);
-    return sheet;
-  });
-
-  scene.add(group);
-  camera.position.set(0, 1.3, 4.7);
-  camera.lookAt(0, 0, 0);
-  return (seconds) => {
-    box.rotation.y = seconds * 0.35;
-    box.rotation.x = Math.sin(seconds * 0.3) * 0.2;
-    for (const sheet of sheets) {
-      const angle = seconds * 0.5 + (sheet.userData.phase as number);
-      sheet.position.set(Math.cos(angle) * 1.65, Math.sin(angle * 2) * 0.3, Math.sin(angle) * 1.65);
-      sheet.rotation.y = -angle + Math.PI / 2;
-    }
-  };
-};
-
-const BUILDERS: Record<SceneName, Builder> = { loom, kit };
+const BUILDERS: Record<SceneName, Builder> = { loom };
 
 /**
  * Mounts a scene into `host` and returns a handle. Uses three's WebGL 2 backend

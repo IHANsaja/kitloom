@@ -20,6 +20,7 @@ import { useSession } from "@/lib/supabase/auth";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { LoadingLine } from "@/components/motion/Strings";
 import { Spool } from "@/components/motion/Illustrations";
+import { PurlYarnBall } from "@/components/pet/PurlYarnBall";
 
 type ListState = CommunitySetup[] | "loading" | "error";
 
@@ -107,6 +108,7 @@ export function AccountPanel() {
     <>
       <div className="cell-x flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-b border-line py-8">
         <Spool className="hidden h-[84px] w-auto shrink-0 self-center sm:block" />
+        <PurlYarnBall className="hidden self-center xl:block" />
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-fg-3">Account</p>
           <h1 className="mt-2 text-h1 break-words">{typeof profile === "object" && profile ? profile.displayName : "Your account"}</h1>

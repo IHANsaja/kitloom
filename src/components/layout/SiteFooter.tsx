@@ -4,6 +4,7 @@ import { Frame } from "@/components/ui/Frame";
 import { LogoMark } from "@/components/ui/Icon";
 import { repositoryLinks, site } from "@/lib/site";
 import { WeftWave } from "@/components/motion/Ambient";
+import { PurlNook } from "@/components/pet/PurlNook";
 
 const LINKS = [
   { href: "/explore", label: "Explore" },
@@ -50,8 +51,9 @@ export function SiteFooter() {
             </ul>
           </nav>
         </div>
-        <div className="cell-x border-t border-line-subtle py-4">
+        <div className="cell-x relative border-t border-line-subtle py-4 lg:flex lg:h-16 lg:items-center lg:py-0">
           <p className="font-mono text-xs text-fg-3">{site.domain}</p>
+          <PurlNook mode="lane" className="left-48" />
         </div>
       </Frame>
     </footer>
