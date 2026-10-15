@@ -1,5 +1,6 @@
 import { PurlPixels } from "@/components/pet/PurlSprite";
 import { HEIGHT, WIDTH, type Pose } from "@/components/pet/sprites";
+import { LogoMark } from "@/components/ui/Icon";
 
 const STEP_A: Pose = { face: "lookRight", ears: "down", legs: "stepA", puff: false, lying: false };
 const STEP_B: Pose = { face: "lookRight", ears: "down", legs: "stepB", puff: false, lying: false };
@@ -25,7 +26,10 @@ export function PurlPreloader() {
           <PurlPixels pose={ARRIVED} className="kl-pre-arrived absolute inset-0" />
         </span>
       </div>
-      <p className="kl-pre-word">kitloom</p>
+      <p className="kl-pre-word">
+        <LogoMark size={20} />
+        kitloom
+      </p>
     </div>
   );
 }

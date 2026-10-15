@@ -13,6 +13,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { composePose, EFFECTS, toRuns } from "../../src/components/pet/sprites.ts";
+import { MARK, MARK_GRID } from "../../src/components/ui/logo.ts";
+import { WORDMARK } from "../../src/components/ui/wordmark.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const out = join(root, "docs", "assets");
@@ -31,6 +33,22 @@ const TOKENS = {
 const FILL = { W: TOKENS.fg, w: TOKENS.fg2, F: TOKENS.lineControl, E: TOKENS.carbon, h: TOKENS.fg, B: TOKENS.lime, S: TOKENS.lime, L: TOKENS.fg2 };
 
 const SANS = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+
+/** The wordmark as outlines (GitHub shows README images without web fonts), baseline at (x, y). */
+function wordmark(x, y, size, fill) {
+  const k = size / WORDMARK.fontSize;
+  return `<path d="${WORDMARK.paths.join(" ")}" fill="${fill}" transform="translate(${x} ${y - WORDMARK.baseline * k}) scale(${k})" shape-rendering="geometricPrecision"/>`;
+}
+
+/** Kitloom's mark (src/components/ui/logo.ts) as SVG markup in its 32-unit grid. */
+function markShapes() {
+  const color = { tile: TOKENS.lime, ink: TOKENS.carbon, cut: TOKENS.lime };
+  return MARK.map(({ el, tone, attrs, stroke }) => {
+    const props = Object.entries(attrs).map(([key, value]) => `${key}="${value}"`);
+    props.push(stroke ? `fill="none" stroke="${color[tone]}" stroke-width="${stroke}" stroke-linecap="round"` : `fill="${color[tone]}"`);
+    return `<${el} ${props.join(" ")}/>`;
+  }).join("");
+}
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
 const pose = (face, extra = {}) => ({ face, ears: "down", legs: "stand", puff: false, lying: false, ...extra });
@@ -73,8 +91,8 @@ function banner() {
 <rect width="${W}" height="${H}" fill="${TOKENS.carbon}"/>
 ${grid}
 <rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" fill="none" stroke="${TOKENS.line}"/>
-<rect x="48" y="58" width="14" height="14" fill="${TOKENS.lime}"/>
-<text x="74" y="72" font-family="${SANS}" font-size="40" font-weight="600" letter-spacing="-1.2" fill="${TOKENS.fg}" shape-rendering="auto">kitloom</text>
+<svg x="48" y="38" width="40" height="40" viewBox="0 0 ${MARK_GRID} ${MARK_GRID}" shape-rendering="geometricPrecision">${markShapes()}</svg>
+${wordmark(100, 70, 32, TOKENS.fg)}
 <text x="48" y="108" font-family="${SANS}" font-size="17" fill="${TOKENS.fg2}" shape-rendering="auto">AI coding-agent setups you can inspect, check and download</text>
 <text x="48" y="134" font-family="${MONO}" font-size="12" fill="${TOKENS.fg3}" shape-rendering="auto">Claude Code · Codex · Cursor · Antigravity · Gemini CLI · Copilot · Windsurf · opencode · Aider</text>
 <line x1="0" y1="${ground + 1}" x2="${W}" y2="${ground + 1}" stroke="${TOKENS.line}"/>

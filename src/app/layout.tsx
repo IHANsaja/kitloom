@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import { Fredoka } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -36,6 +37,10 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
+// The wordmark's face (design.md §3): one weight, downloaded at build time and served from
+// the site, so there is no runtime request to Google.
+const wordmark = Fredoka({ subsets: ["latin"], weight: "600", display: "swap", variable: "--font-fredoka" });
+
 // Marks the document as script-enabled before first paint, so entrance animations can
 // pre-hide their items without ever hiding content from visitors without JavaScript.
 // Also shows the Purl preloader only once per browser session.
@@ -44,7 +49,7 @@ const JS_FLAG =
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${wordmark.variable}`} suppressHydrationWarning>
       <body className="flex flex-col">
         <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
         <PurlPreloader />

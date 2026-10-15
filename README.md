@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/purl-banner.svg" alt="Kitloom: AI coding-agent setups you can inspect, check and download. Purl, the pixel lamb, trots across unwinding a lime yarn." width="880">
+  <img src="docs/assets/purl-banner.svg" alt="Kitloom logo, the woolly k: a lowercase k drawn as Purl the lamb on a lime tile. AI coding-agent setups you can inspect, check and download. Purl, the pixel lamb, trots across unwinding a lime yarn." width="880">
 </p>
 
 <p align="center">
@@ -7,6 +7,7 @@
   &nbsp;·&nbsp; <a href="#run-it">Run it</a>
   &nbsp;·&nbsp; <a href="#how-it-works">How it works</a>
   &nbsp;·&nbsp; <a href="#meet-purl">Meet Purl</a>
+  &nbsp;·&nbsp; <a href="#the-logo">The logo</a>
   &nbsp;·&nbsp; <a href="CONTRIBUTING.md">Contribute</a>
 </p>
 
@@ -114,20 +115,46 @@ purl is a knitting stitch. Purl lives in the empty corners of the site:
 
 Purl is decorative. Screen readers skip it, it never blocks a click, and it stays still for
 anyone who prefers reduced motion. The art in this README is generated from Purl's real
-sprite data: `node scripts/readme/purl-art.mjs`.
+sprite data and the logo's shapes: `node scripts/readme/purl-art.mjs`.
+
+## The logo
+
+<p>
+  <img src="public/brand/kitloom-logo.svg" alt="The Kitloom logo: a lowercase k drawn as Purl the lamb, carbon on a lime tile." width="96">
+  &nbsp;&nbsp;
+  <img src="public/brand/kitloom-lockup.svg" alt="The Kitloom logo beside the lowercase wordmark kitloom." width="300">
+</p>
+
+The mark is the **woolly k**: a lowercase k drawn as Purl. The stem is Purl's fleece, the arm
+is Purl's head with its wool crown, lime eye and lime cheek, and the leg is the tail of Purl's
+lime scarf, with a stripe and a fringe. It uses only lime `#D9FF72` and carbon `#111318`.
+The wordmark is lowercase `kitloom` in Fredoka SemiBold.
+
+| File | Use |
+|---|---|
+| [`public/brand/kitloom-logo.svg`](public/brand/kitloom-logo.svg) | The mark |
+| [`public/brand/kitloom-logo-inverse.svg`](public/brand/kitloom-logo-inverse.svg) | Carbon tile, lime k: only on lime backgrounds |
+| [`public/brand/kitloom-lockup.svg`](public/brand/kitloom-lockup.svg) | Mark and wordmark, for dark backgrounds |
+| [`public/brand/kitloom-lockup-light.svg`](public/brand/kitloom-lockup-light.svg) | Mark and wordmark, for light backgrounds |
+| [`src/app/icon.svg`](src/app/icon.svg), `favicon.ico`, `apple-icon.png` | Browser and home-screen icons |
+
+The shapes are defined once in [`src/components/ui/logo.ts`](src/components/ui/logo.ts) and
+drawn by the site's `LogoMark`. `node scripts/brand/purl-logo.mjs` regenerates the files above
+(the `.ico` and `.png` are rasterised from `icon.svg`). Size, spacing and colour rules are in
+[`design.md`](design.md) §5 "Wordmark". Please don't stretch, rotate or recolour it.
 
 ## Documents
 
 | File | What it covers |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Engineering rules, architecture and security model |
-| [`design.md`](design.md) | Visual and interaction specification, motion, Purl |
+| [`design.md`](design.md) | Visual and interaction specification, motion, Purl, the logo |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to list a setup or change the site |
 | [`docs/deployment.md`](docs/deployment.md) | Hosting, Supabase and sign-in provider setup |
 
 ## Licence
 
-Kitloom's own source code, design, branding and Purl are proprietary: see [`LICENSE`](LICENSE).
+Kitloom's own source code, design, branding (including the logo) and Purl are proprietary: see [`LICENSE`](LICENSE).
 You may read the code and fork it to propose changes, but not reuse it or run it as your own
 product without permission.
 

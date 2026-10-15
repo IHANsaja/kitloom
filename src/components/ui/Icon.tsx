@@ -1,3 +1,7 @@
+import { createElement } from "react";
+
+import { MARK, MARK_GRID, type MarkTone } from "@/components/ui/logo";
+
 const PATHS = {
   search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-3.9-3.9",
   close: "M6 6l12 12M18 6 6 18",
@@ -44,23 +48,21 @@ export function Icon({ name, size = 16, className }: IconProps) {
   );
 }
 
-/** The woven mark: three warp threads, three weft threads, one of them lime. */
-export function LogoMark({ size = 20, className }: { size?: number; className?: string }) {
+const MARK_COLOR: Record<MarkTone, string> = {
+  tile: "var(--color-lime)",
+  ink: "var(--color-carbon)",
+  cut: "var(--color-lime)",
+};
+
+/** The woolly k: Kitloom's mark, Purl drawn as a lowercase k on a lime tile (ui/logo.ts). */
+export function LogoMark({ size = 24, className }: { size?: number; className?: string }) {
   return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth={2.2}
-      strokeLinecap="butt"
-      className={className}
-    >
-      <path d="M6 2v20M12 2v20M18 2v20" stroke="var(--color-fg-2)" />
-      <path d="M2 6h7.5M14.5 6H22M2 18h7.5M14.5 18H22" stroke="var(--color-fg)" />
-      <path d="M2 12h1.5M8.5 12h7M20.5 12H22" stroke="var(--color-lime)" />
+    <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox={`0 0 ${MARK_GRID} ${MARK_GRID}`} className={className}>
+      {MARK.map((shape, index) => {
+        const color = MARK_COLOR[shape.tone];
+        const paint = shape.stroke ? { fill: "none", stroke: color, strokeWidth: shape.stroke, strokeLinecap: "round" as const } : { fill: color };
+        return createElement(shape.el, { key: index, ...shape.attrs, ...paint });
+      })}
     </svg>
   );
 }

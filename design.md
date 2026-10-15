@@ -91,9 +91,13 @@ Status is never colour-only: every semantic colour is paired with text or an ico
 - **Sans:** Geist Sans — interface, headings, body.
 - **Mono:** Geist Mono — technical metadata only: versions, file paths, repository names, slugs,
   identifiers, keyboard shortcuts, eyebrow labels, counts.
+- **Wordmark:** Fredoka SemiBold (600), `font-wordmark` — only the lowercase word `kitloom`
+  beside the mark (header, footer, preloader). Its rounded strokes match the mark's fleece.
+  Never for headings or body text.
 
-Both ship from the `geist` npm package (SIL OFL), self-hosted through `next/font`; no
-runtime font request to a third party. Headings are never monospace.
+Geist ships from the `geist` npm package and Fredoka from `next/font/google`, all SIL OFL and
+all self-hosted through `next/font` (Fredoka is downloaded at build time); no runtime font
+request to a third party. Headings are never monospace.
 
 ### Scale
 
@@ -148,8 +152,8 @@ Controls share heights so rows align: 32px (compact: filter rows, copy buttons),
 
 ## 5. Components
 
-**Site header.** 56px, bottom hairline, sticky, solid `carbon` (no blur/glass). Left: woven
-mark + lowercase wordmark `kitloom`. Centre/left: Explore, Agents (its own page), About. Right: Publish as
+**Site header.** 56px, bottom hairline, sticky, solid `carbon` (no blur/glass). Left: the
+mark (24px) + lowercase wordmark `kitloom`. Centre/left: Explore, Agents (its own page), About. Right: Publish as
 the only bordered action. Current route shown by `fg` text plus a 2px lime underline and
 `aria-current="page"`. Below 768px the links collapse into a disclosure menu opened by a
 labelled button; the menu is a full-width ruled list. Beside Publish sits one quiet text
@@ -176,8 +180,21 @@ for failure — mono 12px, announced with `aria-live="polite"`.
 **Destructive action.** Two steps in place, never a modal: "Delete" swaps to
 "Delete permanently" (`danger` border and text) plus "Keep". Confirmed by toast afterwards.
 
-**Wordmark.** A 3×3 over-under weave drawn with strokes: neutral threads with a single lime
-weft. Always paired with the text wordmark.
+**Wordmark.** The mark is the "woolly k": a lowercase k on a lime tile, drawn as Purl. The
+stem is Purl's fleece, the arm is Purl's head in profile (wool crown, lime eye and cheek), two
+close lime lines are the scarf at the neck, and the leg is the scarf's tail with one stripe
+and a three-thread fringe. Lime and carbon only, on a 32-unit grid with a 7-unit corner
+radius. The shapes live once, as data, in `src/components/ui/logo.ts`: `LogoMark` draws
+them, and `node scripts/brand/purl-logo.mjs` writes the favicon (`src/app/icon.svg`) and
+the standalone files in `public/brand/`. `src/app/favicon.ico` (16, 32, 48) and
+`src/app/apple-icon.png` (180) are rasterised from `icon.svg`; redo them whenever the mark
+changes.
+- Lockup: mark + lowercase `kitloom` in the wordmark face, the word 0.78 × the mark's height
+  and 0.3 × away from it (24px mark → 19px word, 8px gap).
+- Sizes: 24px in the header and footer, 16px in toasts and the favicon. Never below 16px.
+- Clear space: a quarter of the mark (6px at 24px) on every side.
+- Inverse (carbon tile, lime k) only on lime backgrounds. Never stretch, rotate, recolour,
+  or redraw it, and never put the lime tile on lime.
 
 **Search input.** 40–48px, `surface` fill, `line-control` border, leading search icon,
 trailing `/` kbd hint when empty and a labelled clear button when filled. Focus: lime ring.
@@ -228,7 +245,7 @@ label ("Note", "Caution"). Used for the safety reminder and configuration warnin
 **Toast.** Sonner (`sonner`), bottom-right (bottom-centre on mobile), themed entirely from
 tokens: `surface` fill, 1px `line`, 4px radius, no shadow, a 2px left rule (lime for
 success, `danger` for errors, `info` for notes), title in sans, description in mono `fg-2`.
-The success icon is the small woven mark. Toasts confirm things that really happened —
+The success icon is the mark at 16px. Toasts confirm things that really happened —
 "Command copied", "Copy failed", "Setup published" — and carry the inspect-first reminder after a download link is
 followed. They never announce a successful download (the browser does not tell us) and are
 never used for marketing. Critical information is never toast-only.
