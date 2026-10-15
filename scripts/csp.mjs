@@ -7,7 +7,9 @@
  * in a <meta> tag so each page carries its own hashes; the directives a <meta> policy
  * cannot express (frame-ancestors) are sent as a header from public/_headers.
  *
- * Runs automatically after `npm run build` (the "postbuild" script).
+ * Runs automatically after `npm run build` (the "postbuild" script). The static
+ * export in `out/` is used by Cloudflare Pages, while the matching prerendered
+ * files in `.next/server/app/` are used by Vercel.
  */
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
@@ -93,8 +95,12 @@ async function main() {
 
   const supabaseOrigin = httpsOrigin(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const turnstile = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-  const files = htmlFiles(join(process.cwd(), "out"));
-  if (files.length === 0) throw new Error("No HTML found in out/. Run `next build` first.");
+  const outputDirectories = ["out", ".next/server/app"];
+  const files = outputDirectories.flatMap((directory) => {
+    const path = join(process.cwd(), directory);
+    return statSync(path, { throwIfNoEntry: false })?.isDirectory() ? htmlFiles(path) : [];
+  });
+  if (files.length === 0) throw new Error("No prerendered HTML found. Run `next build` first.");
 
   for (const file of files) {
     const html = readFileSync(file, "utf8");
