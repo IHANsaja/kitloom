@@ -14,6 +14,7 @@ import {
   callbackUrl,
   fetchAuthMethods,
   OAUTH_PROVIDERS,
+  RESET_PASSWORD_PATH,
   safeNextPath,
   useSession,
   type AuthMethods,
@@ -156,7 +157,7 @@ export function SignInPanel() {
         else if (!data.session) setSent({ kind: "confirm", to: address });
       } else if (mode === "forgot") {
         const { error: failure } = await auth.resetPasswordForEmail(address, {
-          redirectTo: callbackUrl("/account?reset=password"),
+          redirectTo: callbackUrl(RESET_PASSWORD_PATH),
           captchaToken: captchaOption,
         });
         if (failure && (failure.status === 429 || /captcha/i.test(failure.message))) setError(explainAuthError(failure, "reset"));

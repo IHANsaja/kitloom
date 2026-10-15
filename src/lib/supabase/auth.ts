@@ -11,6 +11,18 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
  */
 export type SessionState = Session | null | "loading";
 
+/** Where a password-reset link must end up: the account page, with the new-password form open. */
+export const RESET_PASSWORD_PATH = "/account?reset=password";
+
+const CALLBACK_PATH = "/auth/callback";
+
+/** True when the URL carries a sign-in code or an auth error from Supabase. */
+function isAuthRedirect(location: Location): boolean {
+  const query = new URLSearchParams(location.search);
+  const hash = new URLSearchParams(location.hash.slice(1));
+  return query.has("code") || query.has("error_description") || hash.has("error_description");
+}
+
 let state: SessionState = isSupabaseConfigured ? "loading" : null;
 let started = false;
 const listeners = new Set<() => void>();
@@ -23,8 +35,23 @@ function set(next: SessionState) {
 function start() {
   if (started || !isSupabaseConfigured) return;
   started = true;
+  // Supabase falls back to the Site URL when a link's redirect is not on its allow list, so a
+  // sign-in code can land on any page. Hand it to the callback page, which finishes the
+  // sign-in or explains why it failed, instead of exchanging it silently wherever it landed.
+  if (window.location.pathname.replace(/\/$/, "") !== CALLBACK_PATH && isAuthRedirect(window.location)) {
+    window.location.replace(`${CALLBACK_PATH}${window.location.search}${window.location.hash}`);
+    return;
+  }
   const supabase = getSupabaseClient();
-  supabase.auth.onAuthStateChange((_event, session) => set(session));
+  supabase.auth.onAuthStateChange((event, session) => {
+    set(session);
+    // A password-reset link signs the visitor in, then they must choose a new password.
+    // Supabase sends them to the Site URL instead of our callback when the redirect URL is
+    // not on its allow list, so react to the event wherever it lands, not only on /auth/callback.
+    if (event === "PASSWORD_RECOVERY" && window.location.pathname + window.location.search !== RESET_PASSWORD_PATH) {
+      window.location.replace(RESET_PASSWORD_PATH);
+    }
+  });
   supabase.auth
     .getSession()
     .then(({ data }) => set(data.session))
@@ -84,5 +111,5 @@ export function safeNextPath(value: string | null | undefined): string {
 }
 
 export function callbackUrl(next: string): string {
-  return `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNextPath(next))}`;
+  return `${window.location.origin}${CALLBACK_PATH}?next=${encodeURIComponent(safeNextPath(next))}`;
 }
