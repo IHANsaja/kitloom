@@ -78,8 +78,18 @@ const tomlMultiline = (s) => `'''\n${String(s).replace(/'''/g, "' ''")}\n'''`;
 
 const RAW = "https://raw.githubusercontent.com";
 async function raw(repo, commit, path) {
-  const response = await fetch(`${RAW}/${repo}/${commit}/${path.split("/").map(encodeURIComponent).join("/")}`, { headers: { "User-Agent": "kitloom-weave" } });
-  if (!response.ok) return null;
+  const url = `${RAW}/${repo}/${commit}/${path.split("/").map(encodeURIComponent).join("/")}`;
+  let response = null;
+  // Retries ride out a dropped connection or a brief DNS failure.
+  for (let attempt = 1; attempt <= 4 && !response; attempt++) {
+    try {
+      response = await fetch(url, { headers: { "User-Agent": "kitloom-weave" } });
+    } catch (error) {
+      if (attempt === 4) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+  if (!response || !response.ok) return null;
   const buffer = Buffer.from(await response.arrayBuffer());
   if (buffer.subarray(0, 8192).includes(0)) return { binary: buffer };
   return { text: buffer.toString("utf8") };
@@ -152,8 +162,9 @@ for (const entry of kit.skills ?? []) {
 
   for (const base of [".agents/skills", ".claude/skills"]) {
     for (const [rel, content] of copied) put(`${base}/${folder}/${rel}`, content);
-    put(`${base}/${folder}/LICENSE.txt`, licence);
-    put(`${base}/${folder}/NOTICE.md`, notice);
+    // A skill that ships its own licence file keeps it; ours is added only when missing.
+    if (!copied.has("LICENSE.txt")) put(`${base}/${folder}/LICENSE.txt`, licence);
+    put(`${base}/${folder}/${copied.has("NOTICE.md") ? "KITLOOM_NOTICE.md" : "NOTICE.md"}`, notice);
   }
   credits.push({ folder, repo: meta.repo, commit: meta.commit, license: meta.license, stars: meta.stars, dir: meta.dir });
   skillLines.push(`- \`${folder}\` — ${entry.why ?? meta.description.slice(0, 160)}`);
