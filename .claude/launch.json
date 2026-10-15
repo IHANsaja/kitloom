@@ -21,6 +21,18 @@
         "4173"
       ],
       "port": 4173
+    },
+    {
+      "name": "email-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve@14",
+        "supabase/templates",
+        "-l",
+        "4180"
+      ],
+      "port": 4180
     }
   ]
 }

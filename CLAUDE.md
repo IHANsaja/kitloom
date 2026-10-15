@@ -128,14 +128,15 @@ Routes: `/` · `/explore` · `/agents` · `/setup?slug=` · `/publish` (`?edit=<
 
 | Concern | Owner | Notes |
 |---|---|---|
-| Setup data | `src/lib/community/setups.ts` | The only module that queries `setups`/`profiles`. `rowToCommunitySetup` treats every row as untrusted and drops or strips anything unsafe before it reaches the UI. |
+| Setup data | `src/lib/community/setups.ts` | The only module that queries `setups` (and joins public profile fields). `rowToCommunitySetup` treats every row as untrusted and drops or strips anything unsafe before it reaches the UI. |
 | Listing hook | `src/lib/community/useSetups.ts` | One fetch per page load, shared by every component. Exposes `state` (`loading`/`ready`/`error`/`off`): an empty list is only a fact once the state is `ready`. |
 | Query logic | `src/lib/catalog/query.ts` | Pure `searchSetups` / filter / sort / facets over `SetupSummary`. |
 | Taxonomy | `src/lib/catalog/taxonomy.ts` | Known agents and categories. **Must match the check constraints on `public.setups`** — change both together, with a migration. |
 | GitHub reader | `src/lib/community/github.ts` | Unauthenticated GitHub REST calls from the browser at publish time (README, file list, licence, default branch). |
 | Storage references | `src/lib/packages/urls.ts` | Decides which download and link URLs are acceptable. |
 | Download eligibility | `src/lib/packages/access.ts` | `getDownloadAccess(setup)` is the single place that decides whether and how a setup can be downloaded. Today everything is free. |
-| Auth | `src/lib/supabase/auth.ts` | `useSession()` store, enabled-provider discovery, safe redirect paths. |
+| Auth | `src/lib/supabase/auth.ts`, `password.ts` | `useSession()` store, enabled-provider discovery, safe redirect paths; password rules and auth error messages. |
+| Profiles | `src/lib/community/profiles.ts` | The only module that reads or updates the signed-in member's own profile. |
 | Package contents | `src/lib/packages/contents.ts` | Classifies file paths (skills, hooks, MCP config…) as a reading aid. Not a scanner. |
 | Pre-download check | `src/lib/scan/` (Heddle) | Runs in the browser when someone clicks download: pins the branch to a commit, reads the tree and every readable text file at that commit, and reports findings. The only code that decides what counts as a warning sign. |
 
@@ -148,9 +149,15 @@ Security, column grants, and check constraints are the access control.** Client-
 validation exists only to give good error messages.
 
 - `profiles` — one row per account, created by the `handle_new_user` trigger. Public
-  read; no client writes at all, so a display name cannot be changed to impersonate
-  someone. Display names come from the GitHub username or provider name, never from an
-  email address (email sign-ins get `member-xxxxxxxx`).
+  read. A member can update only `display_name`, `bio` and `website_url` on their own row
+  (column grants + policy). The `profiles_before_update` trigger enforces the name rules:
+  3–40 characters, unique regardless of case and punctuation (index on
+  `private.display_name_key`), reserved names blocked (`private.is_reserved_display_name`:
+  Kitloom, staff words, agent vendors), at most one change a day. `github_username` is never
+  client-writable: it is the only proof an account belongs to a GitHub user. New accounts
+  take the GitHub username or provider name, never an email address, and fall back to
+  `member-xxxxxxxx` when that name is reserved or taken. Maintainer edits (no signed-in
+  user) skip the reserved-name and daily checks. Tests: `supabase/tests/profiles.sql`.
 - `setups` — public read of `status = 'published'`; owners also see their own hidden rows.
   Insert/update/delete only by the owner. `owner_id`, `status`, `id` and timestamps are not
   grantable columns: `owner_id` defaults to `auth.uid()`, `status` to `'published'`.
@@ -206,8 +213,13 @@ validation exists only to give good error messages.
     `raw.githubusercontent.com`, which is in the CSP's `connect-src`.
 - README content is untrusted Markdown: rendered with `react-markdown` (no raw HTML), link
   protocols restricted, remote images never fetched.
-- Sign-in is passwordless only (OAuth or emailed link, PKCE flow). Do not add password
-  fields. Post-sign-in redirects go through `safeNextPath` (same-site paths only).
+- Sign-in methods: GitHub and Google (OAuth), email and password, and a one-time emailed
+  link, all with the PKCE flow. Passwords are handled only by Supabase Auth: the app never
+  stores, logs or sends them anywhere else. Minimum length is enforced in Supabase
+  (Authentication → Policies) and mirrored in `password.ts`; leaked-password protection
+  must be on. Sign-in errors never reveal whether an email has an account. A "forgot
+  password" link lands on `/account?reset=password`. Post-sign-in redirects go through
+  `safeNextPath` (same-site paths only).
 - Never display a user's email address to anyone but that user.
 - **Content-Security-Policy.** `scripts/csp.mjs` runs after every build and adds a
   `<meta>` CSP to each exported page: scripts only from the site plus the SHA-256 of each

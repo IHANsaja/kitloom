@@ -27,7 +27,7 @@ export default function SignInPage() {
           <ul className="mt-8 max-w-[52ch] space-y-3 border-t border-line pt-6 text-sm leading-relaxed text-fg-2">
             <li>Kitloom stores a public display name and the setups you publish. Nothing else.</li>
             <li>Your email address is used only to sign you in. It is never displayed.</li>
-            <li>There are no passwords to create or remember.</li>
+            <li>Use GitHub, Google, an email and password, or a one-time emailed link. You can edit your profile and set a password from your account page.</li>
           </ul>
         </div>
         <div className="cell-x border-t border-line py-10 lg:col-span-5 lg:border-t-0 lg:border-l lg:px-8 lg:py-16">

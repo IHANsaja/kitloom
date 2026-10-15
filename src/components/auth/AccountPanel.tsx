@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { ChangePassword } from "@/components/auth/ChangePassword";
+import { ProfileEditor } from "@/components/auth/ProfileEditor";
 import { useGlide } from "@/components/motion/useGlide";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Notice } from "@/components/ui/Notice";
 import { buttonClass } from "@/components/ui/styles";
 import { setupHref } from "@/lib/catalog/summary";
+import { fetchOwnProfile, type OwnProfile } from "@/lib/community/profiles";
 import { deleteSetup, fetchOwnSetups, type CommunitySetup } from "@/lib/community/setups";
 import { invalidateSetups } from "@/lib/community/useSetups";
 import { formatDate, pluralize } from "@/lib/format";
@@ -25,7 +28,9 @@ export function AccountPanel() {
   const session = useSession();
   const userId = session !== "loading" && session !== null ? session.user.id : null;
   const [setups, setSetups] = useState<ListState>("loading");
-  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [profile, setProfile] = useState<OwnProfile | null | "loading" | "error">("loading");
+  // Arriving from a "forgot password" link: lead with the password form.
+  const [recovering] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("reset") === "password");
   const [confirming, setConfirming] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const glide = useGlide<HTMLUListElement>("left");
@@ -35,20 +40,20 @@ export function AccountPanel() {
   }, [session, router]);
 
   useEffect(() => {
+    if (recovering && session) document.getElementById("password-title")?.scrollIntoView({ block: "start" });
+  }, [recovering, session]);
+
+  useEffect(() => {
     if (!userId) return;
     let active = true;
     fetchOwnSetups(userId).then(
       (rows) => active && setSetups(rows),
       () => active && setSetups("error"),
     );
-    getSupabaseClient()
-      .from("profiles")
-      .select("display_name")
-      .eq("id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (active && typeof data?.display_name === "string") setDisplayName(data.display_name);
-      });
+    fetchOwnProfile(userId).then(
+      (row) => active && setProfile(row),
+      () => active && setProfile("error"),
+    );
     return () => {
       active = false;
     };
@@ -104,7 +109,7 @@ export function AccountPanel() {
         <Spool className="hidden h-[84px] w-auto shrink-0 self-center sm:block" />
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-fg-3">Account</p>
-          <h1 className="mt-2 text-h1 break-words">{displayName ?? "Your account"}</h1>
+          <h1 className="mt-2 text-h1 break-words">{typeof profile === "object" && profile ? profile.displayName : "Your account"}</h1>
           <p className="mt-2 text-sm text-fg-2">
             Signed in as <span className="font-mono text-code break-all text-fg">{session.user.email ?? "a connected account"}</span>. Your
             email is not shown to anyone else; listings carry the display name above.
@@ -191,6 +196,40 @@ export function AccountPanel() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section aria-labelledby="profile-title" className="border-t border-line">
+        <div className="cell-x border-b border-line py-4">
+          <h2 id="profile-title" className="text-h2">
+            Profile
+          </h2>
+        </div>
+        <div className="cell-x py-8">
+          {profile === "loading" ? (
+            <LoadingLine>Loading your profile…</LoadingLine>
+          ) : profile === "error" || profile === null ? (
+            <Notice tone="danger" label="Could not load">
+              Your profile could not be loaded. Reload the page to try again.
+            </Notice>
+          ) : (
+            <ProfileEditor userId={session.user.id} profile={profile} onSaved={setProfile} />
+          )}
+        </div>
+      </section>
+
+      <section aria-labelledby="password-title" className="border-t border-line">
+        <div className="cell-x border-b border-line py-4">
+          <h2 id="password-title" className="scroll-mt-20 text-h2">
+            Password
+          </h2>
+        </div>
+        <div className="cell-x py-8">
+          <p className="mb-6 max-w-[60ch] text-sm leading-relaxed text-fg-2">
+            Set a password to sign in with <span className="font-mono text-code text-fg">{session.user.email ?? "your email"}</span> and a
+            password. You can keep using GitHub, Google or an emailed link as well.
+          </p>
+          <ChangePassword recovering={recovering} />
+        </div>
       </section>
     </>
   );

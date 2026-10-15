@@ -49,17 +49,26 @@ A sign-in that returns to an address not on this list is rejected by Supabase.
 
 The sign-in page shows only the methods that are enabled, with no code change needed.
 
-- **Email (one-time link)** is enabled by default. Supabase's built-in mail service is for
-  testing only: it is tightly rate-limited and only delivers to members of your Supabase
-  organisation. For real users, configure your own SMTP provider under
+- **Email** (enabled by default) covers both email-and-password accounts and the one-time
+  emailed link. Keep **Confirm email** on, so a password account is only active once its
+  owner opens the confirmation link. Supabase's built-in mail service is for testing only:
+  it is tightly rate-limited and only delivers to members of your Supabase organisation.
+  For real users, configure your own SMTP provider under
   **Authentication → Emails → SMTP Settings**.
 - **GitHub (recommended for this audience):** create an OAuth App at
   github.com → Settings → Developer settings → OAuth Apps with callback URL
   `https://xwoekncvlylaohjxrkgf.supabase.co/auth/v1/callback`, then paste its Client ID and
   Client Secret into **Authentication → Sign In / Providers → GitHub**. GitHub sign-ins get
   their GitHub username as their public display name.
-- **Google:** the same pattern with a Google OAuth client. Its consent screen will show the
-  `supabase.co` address unless you verify your brand with Google or add a custom domain.
+- **Google:** in Google Cloud, **APIs & Services → Credentials → Create OAuth client ID**,
+  type *Web application*:
+  - Authorized JavaScript origins: `https://kitloom.site`, `http://localhost:3000`, and
+    your `https://<project>.pages.dev` (optional for this flow, harmless).
+  - Authorized redirect URI: exactly `https://xwoekncvlylaohjxrkgf.supabase.co/auth/v1/callback`.
+
+  Paste the Client ID and Client secret into **Authentication → Sign In / Providers →
+  Google**. The consent screen shows the `supabase.co` address unless you verify your brand
+  with Google or add a custom domain to Supabase.
 
 OAuth client secrets are entered in the Supabase dashboard only. They never go in this
 repository or in Cloudflare.
@@ -97,10 +106,14 @@ The rest is dashboard configuration:
    their defaults or lower.
 4. **Link lifetime.** In the Email provider settings, set the one-time link expiry to
    15 minutes (900 seconds) or less.
-5. **Passwords.** Kitloom never offers passwords, but Supabase's email provider still
-   accepts a password sign-up sent straight to its API. If your plan offers it, enable
-   leaked-password protection so such accounts at least cannot use known-breached
-   passwords.
+5. **Passwords.** In **Authentication → Policies** (password settings):
+   - set **Minimum password length** to 10 (the sign-in form asks for the same);
+   - turn on **leaked-password protection** (blocks passwords found in data breaches), if
+     your plan offers it;
+   - turn on **Secure password change**, so changing a password needs a recent sign-in.
+
+   A "forgot password" email links to `/auth/callback?next=/account?reset=password`, which
+   is covered by the `/auth/callback` redirect URLs above.
 
 ### Checking the access rules
 

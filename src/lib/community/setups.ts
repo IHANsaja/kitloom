@@ -14,6 +14,7 @@ import {
   githubArchiveUrl,
   isGitHubRepoUrl,
   isSafeGitBranch,
+  isSafeHttpsUrl,
   MAX_SOURCE_REPOSITORIES,
   parseGitHubRepoUrl,
 } from "@/lib/packages/urls";
@@ -26,7 +27,7 @@ const SPDX_LIKE = /^[A-Za-z0-9][A-Za-z0-9.+-]{0,63}$/;
 const TAG = /^[a-z0-9][a-z0-9.+-]{0,31}$/;
 
 const SUMMARY_COLUMNS =
-  "slug,name,description,agents,categories,tags,version,license,repository_url,default_branch,created_at,updated_at,status,owner_id,profiles(display_name,github_username)";
+  "slug,name,description,agents,categories,tags,version,license,repository_url,default_branch,created_at,updated_at,status,owner_id,profiles(display_name,github_username,website_url)";
 const DETAIL_COLUMNS = `${SUMMARY_COLUMNS},readme,manifest,source_repositories`;
 
 /** What a creator fills in. Everything else is derived or assigned by the database. */
@@ -171,6 +172,7 @@ export function rowToCommunitySetup(row: unknown): CommunitySetup | null {
   const license = text(r.license, 64);
   const profile = (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles) as Record<string, unknown> | null | undefined;
   const githubUsername = text(profile?.github_username, 39);
+  const website = text(profile?.website_url, 200);
 
   const setup: Setup = {
     slug,
@@ -178,7 +180,13 @@ export function rowToCommunitySetup(row: unknown): CommunitySetup | null {
     description: description.trim(),
     creator: {
       name: text(profile?.display_name, 80) ?? "Kitloom member",
-      url: githubUsername && /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/.test(githubUsername) ? `https://github.com/${githubUsername}` : null,
+      // A linked GitHub account first; otherwise the member's own website, if it is https.
+      url:
+        githubUsername && /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/.test(githubUsername)
+          ? `https://github.com/${githubUsername}`
+          : website && isSafeHttpsUrl(website)
+            ? website
+            : null,
     },
     // Community listings are always the creator's own declaration.
     agents: [...new Set(agents)].map((id) => ({ id, compatibility: "declared" })),
