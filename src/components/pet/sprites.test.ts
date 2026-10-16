@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { COLS, composePose, EFFECTS, PIXEL_CLASS, ROWS, toRuns, type Ears, type Face, type Legs } from "@/components/pet/sprites";
 
-const FACES: Face[] = ["open", "lookLeft", "lookRight", "blink", "happy", "love", "scared", "squished", "sleep", "sad"];
+const FACES: Face[] = ["open", "lookLeft", "lookRight", "blink", "happy", "love", "scared", "squished", "sleep", "sad", "wink", "starry", "eager", "curious", "worried", "determined"];
 const EARS: Ears[] = ["down", "perk", "wiggle"];
 const LEGS: Legs[] = ["stand", "stepA", "stepB", "tuck", "splay", "none"];
 const KNOWN = new Set([".", ...Object.keys(PIXEL_CLASS)]);

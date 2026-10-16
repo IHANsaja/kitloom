@@ -29,7 +29,23 @@ export const PIXEL_CLASS = {
 
 export type PixelCode = keyof typeof PIXEL_CLASS;
 
-export type Face = "open" | "lookLeft" | "lookRight" | "blink" | "happy" | "love" | "scared" | "squished" | "sleep" | "sad";
+export type Face =
+  | "open"
+  | "lookLeft"
+  | "lookRight"
+  | "blink"
+  | "happy"
+  | "love"
+  | "scared"
+  | "squished"
+  | "sleep"
+  | "sad"
+  | "wink"
+  | "starry"
+  | "eager"
+  | "curious"
+  | "worried"
+  | "determined";
 export type Ears = "down" | "perk" | "wiggle";
 export type Legs = "stand" | "stepA" | "stepB" | "tuck" | "splay" | "none";
 
@@ -95,6 +111,18 @@ const FACES: Record<Face, Patch[]> = {
   sleep: [[7, 6, "E"], [8, 6, "E"], [12, 6, "E"], [13, 6, "E"], ...CHEEKS],
   // Eyes looking down, brows tilted, a small frown
   sad: [[7, 6, "E"], [8, 6, "E"], [12, 6, "E"], [13, 6, "E"], [8, 4, "E"], [12, 4, "E"], [9, 8, "E"], [10, 7, "E"], [11, 8, "E"]],
+  // One eye open, one closed, a sideways grin: welcome aboard
+  wink: [[7, 5, "E"], [8, 5, "E"], [7, 6, "E"], [8, 6, "h"], [12, 6, "E"], [13, 6, "E"], [13, 5, "E"], ...CHEEKS, [10, 8, "E"], [11, 8, "E"], [12, 7, "E"]],
+  // Lime, shining eyes and a wide smile: delighted
+  starry: [[7, 5, "S"], [8, 5, "S"], [7, 6, "S"], [8, 6, "h"], [12, 5, "S"], [13, 5, "S"], [12, 6, "S"], [13, 6, "h"], [9, 7, "E"], [9, 8, "E"], [10, 8, "E"], [11, 8, "E"], [11, 7, "E"]],
+  // Bright eyes looking up, open happy mouth: ready to go
+  eager: [[7, 4, "E"], [8, 4, "h"], [7, 5, "E"], [8, 5, "E"], [12, 4, "E"], [13, 4, "h"], [12, 5, "E"], [13, 5, "E"], ...CHEEKS, [9, 7, "E"], [10, 7, "E"], [11, 7, "E"], [10, 8, "E"]],
+  // One brow up, one eye wide, a small "o": hm, what is this?
+  curious: [[7, 5, "E"], [8, 5, "E"], [7, 6, "E"], [8, 6, "h"], [12, 3, "E"], [13, 3, "E"], [12, 4, "E"], [13, 4, "E"], [12, 5, "E"], [13, 5, "h"], [12, 6, "E"], [13, 6, "E"], [10, 8, "E"]],
+  // Brows tilted up in the middle, a wobbly frown: oh no
+  worried: [[8, 3, "E"], [9, 4, "E"], [12, 3, "E"], [11, 4, "E"], [7, 5, "E"], [8, 5, "E"], [7, 6, "E"], [8, 6, "h"], [12, 5, "E"], [13, 5, "E"], [12, 6, "E"], [13, 6, "h"], [9, 8, "E"], [10, 7, "E"], [11, 8, "E"]],
+  // Brows down, eyes narrowed, mouth set: on guard
+  determined: [[7, 4, "E"], [8, 5, "E"], [13, 4, "E"], [12, 5, "E"], [7, 6, "E"], [8, 6, "E"], [12, 6, "E"], [13, 6, "E"], [9, 8, "E"], [10, 8, "E"], [11, 8, "E"]],
 };
 
 const EAR_PIXELS: Patch[] = [
@@ -189,6 +217,12 @@ export function toRuns(rows: string[]): Run[] {
 /** Pixel hearts, Zs, the alarm mark and a sweat drop: tiny effects drawn beside the lamb. */
 export const EFFECTS = {
   heart: [".B.B.", "BBBBB", "BBBBB", ".BBB.", "..B.."],
+  // Props for the account emails
+  sparkle: ["..B..", ".BBB.", "BBBBB", ".BBB.", "..B.."],
+  key: [".www.....", "w...wwwww", "w...w.w.w", ".www....."],
+  envelope: ["WWWWWWW", "WW...WW", "W.W.W.W", "W..W..W", "WWWWWWW"],
+  question: [".WWW.", "W...W", "...W.", "..W..", ".....", "..W.."],
+  lock: [".www.", "w...w", "w...w", "WWWWW", "WWEWW", "WWEWW", "WWWWW"],
   z: ["WWW", "..W", ".W.", "WWW"],
   bang: ["W", "W", "W", ".", "W"],
   drop: [".w.", "www", ".w."],

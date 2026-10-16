@@ -6,8 +6,14 @@
  * Email clients ignore most modern CSS, so the layout is tables with inline styles only,
  * no images (many inboxes block them) and no web fonts. Colours are the site's design
  * tokens (design.md §2). `{{ .X }}` placeholders are filled in by Supabase.
+ *
+ * Purl appears in every email, drawn from its real sprite data as a table of coloured
+ * cells (no image to block), with an expression and a prop that fit the message.
+ * Node 22.18+ (it imports src/components/pet/sprites.ts, stripping the types).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
+
+import { composePose, EFFECTS } from "../../src/components/pet/sprites.ts";
 
 const OUT = new URL("../../supabase/templates/", import.meta.url);
 
@@ -21,6 +27,48 @@ const C = {
   fg2: "#a7abb5",
   fg3: "#777e8a",
 };
+/** Purl's pixel codes as email-safe hex (same tokens as the site). */
+const PIXEL = { W: "#f2f3f5", w: "#a7abb5", F: "#6b7280", E: "#111318", h: "#f2f3f5", B: "#d9ff72", S: "#d9ff72", L: "#a7abb5" };
+
+/**
+ * A little scene: Purl in a pose, plus props placed around it, drawn as table cells. Each
+ * row merges runs of one colour into a single cell, so a scene is a few hundred cells.
+ */
+function purlScene({ face, ears = "down", props = [] }, size = 4) {
+  const cols = 36;
+  const rows = 18;
+  const grid = Array.from({ length: rows }, () => Array(cols).fill("."));
+  const place = (art, x, y) =>
+    art.forEach((line, dy) =>
+      [...line].forEach((code, dx) => {
+        if (code !== "." && grid[y + dy]?.[x + dx] !== undefined) grid[y + dy][x + dx] = code;
+      }),
+    );
+  place(composePose({ face, ears, legs: "stand", puff: false, lying: false }), 0, 2);
+  for (const prop of props) place(EFFECTS[prop.name], prop.x, prop.y);
+
+  const body = grid
+    .map((line) => {
+      const cells = [];
+      for (let x = 0; x < line.length; ) {
+        let end = x + 1;
+        while (end < line.length && line[end] === line[x]) end += 1;
+        const width = (end - x) * size;
+        const colour = PIXEL[line[x]];
+        cells.push(
+          `<td width="${width}" height="${size}"${colour ? ` bgcolor="${colour}"` : ""} style="width:${width}px;height:${size}px;padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly;${colour ? `background:${colour};` : ""}"></td>`,
+        );
+        x = end;
+      }
+      // Each pixel row is its own one-row table: a single table would align every row's
+      // cells into shared columns, and the merged runs differ from row to row.
+      return `<tr><td height="${size}" style="height:${size}px;padding:0;font-size:0;line-height:0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${cols * size}" style="display:block;border-collapse:collapse;table-layout:fixed;width:${cols * size}px;height:${size}px;"><tr>${cells.join("")}</tr></table></td></tr>`;
+    })
+    .join("");
+  return `
+<table role="presentation" aria-hidden="true" cellpadding="0" cellspacing="0" border="0" width="${cols * size}" style="border-collapse:collapse;width:${cols * size}px;margin:0 0 22px;">${body}</table>`;
+}
+
 const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace";
 
@@ -55,7 +103,7 @@ const note = (text) => `
   </tr>
 </table>`;
 
-function layout({ subject, preheader, eyebrow, title, body }) {
+function layout({ subject, preheader, eyebrow, title, body, purl }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -96,7 +144,7 @@ function layout({ subject, preheader, eyebrow, title, body }) {
             </table>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="padding:30px 32px 32px;">
+                <td style="padding:30px 32px 32px;">${purl ? purlScene(purl) : ""}
                   <p style="margin:0;font-family:${MONO};font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:${C.lime};">${eyebrow}</p>
                   <h1 style="margin:10px 0 0;font-family:${SANS};font-size:24px;line-height:1.25;font-weight:600;letter-spacing:-0.4px;color:${C.fg};">${title}</h1>
                   ${body}
@@ -131,6 +179,7 @@ const mono = (html) => `<span style="font-family:${MONO};font-size:14px;color:${
 const TEMPLATES = [
   {
     file: "confirm-signup.html",
+    purl: { face: "wink", ears: "wiggle", props: [{ name: "heart", x: 25, y: 4 }, { name: "heart", x: 30, y: 9 }] },
     dashboard: "Confirm sign up",
     subject: "Confirm your Kitloom account",
     preheader: "One click to finish creating your account.",
@@ -144,6 +193,7 @@ const TEMPLATES = [
   },
   {
     file: "invite.html",
+    purl: { face: "starry", ears: "perk", props: [{ name: "sparkle", x: 24, y: 2 }, { name: "sparkle", x: 30, y: 7 }, { name: "sparkle", x: 25, y: 12 }] },
     dashboard: "Invite user",
     subject: "You are invited to Kitloom",
     preheader: "Accept the invitation to publish and manage agent setups.",
@@ -158,6 +208,7 @@ const TEMPLATES = [
   },
   {
     file: "magic-link.html",
+    purl: { face: "eager", ears: "perk", props: [{ name: "key", x: 25, y: 9 }, { name: "sparkle", x: 30, y: 3 }] },
     dashboard: "Magic link or OTP",
     subject: "Your Kitloom sign-in link",
     preheader: "Sign in with one click. The link works once.",
@@ -171,6 +222,7 @@ const TEMPLATES = [
   },
   {
     file: "change-email.html",
+    purl: { face: "curious", props: [{ name: "envelope", x: 25, y: 9 }, { name: "question", x: 27, y: 2 }] },
     dashboard: "Change email address",
     subject: "Confirm your new email address",
     preheader: "Confirm the change to your Kitloom sign-in email.",
@@ -185,6 +237,7 @@ const TEMPLATES = [
   },
   {
     file: "reset-password.html",
+    purl: { face: "worried", props: [{ name: "question", x: 26, y: 2 }, { name: "key", x: 24, y: 12 }] },
     dashboard: "Reset password",
     subject: "Reset your Kitloom password",
     preheader: "Choose a new password. The link works once.",
@@ -198,6 +251,7 @@ const TEMPLATES = [
   },
   {
     file: "reauthentication.html",
+    purl: { face: "determined", ears: "perk", props: [{ name: "lock", x: 26, y: 6 }] },
     dashboard: "Reauthentication",
     subject: "Your Kitloom verification code",
     preheader: "Enter this code to confirm it is you.",
@@ -234,10 +288,21 @@ The placeholders (\`{{ .ConfirmationURL }}\`, \`{{ .Email }}\`, \`{{ .NewEmail }
 \`{{ .SiteURL }}\`) are filled in by Supabase. \`{{ .SiteURL }}\` is the **Site URL** in
 Authentication → URL Configuration.
 
-Design: dark card on carbon, the lime "knot" wordmark, a lime thread rule, one lime action
-button, the link written out in case the button does not render, and a safety note. Tables
-and inline styles only, no images, no web fonts, so it renders in Gmail, Outlook and Apple
-Mail. Clients that force a light theme may invert colours; the content stays readable.
+Design: dark card on carbon, the lime "knot" wordmark, a lime thread rule, Purl with an
+expression that fits the email, one lime action button, the link written out in case the
+button does not render, and a safety note. Tables and inline styles only, no images, no web
+fonts, so it renders in Gmail, Outlook and Apple Mail. Purl is pixel art made of table
+cells, drawn from the site's sprite data, so no inbox blocks it. Clients that force a light
+theme may invert colours; the content stays readable.
+
+| Email | Purl |
+|---|---|
+| Confirm sign up | winking, an ear flicked up, lime hearts |
+| Invite user | starry lime eyes, ears up, sparkles |
+| Magic link | eager, looking up, holding out a key |
+| Change email address | one brow raised at an envelope and a question mark |
+| Reset password | worried, a question mark and a dropped key |
+| Reauthentication | determined, ears up, guarding a lock |
 `,
 );
 console.log(`${TEMPLATES.length} templates → supabase/templates/`);

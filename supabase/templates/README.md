@@ -19,7 +19,18 @@ The placeholders (`{{ .ConfirmationURL }}`, `{{ .Email }}`, `{{ .NewEmail }}`, `
 `{{ .SiteURL }}`) are filled in by Supabase. `{{ .SiteURL }}` is the **Site URL** in
 Authentication → URL Configuration.
 
-Design: dark card on carbon, the lime "knot" wordmark, a lime thread rule, one lime action
-button, the link written out in case the button does not render, and a safety note. Tables
-and inline styles only, no images, no web fonts, so it renders in Gmail, Outlook and Apple
-Mail. Clients that force a light theme may invert colours; the content stays readable.
+Design: dark card on carbon, the lime "knot" wordmark, a lime thread rule, Purl with an
+expression that fits the email, one lime action button, the link written out in case the
+button does not render, and a safety note. Tables and inline styles only, no images, no web
+fonts, so it renders in Gmail, Outlook and Apple Mail. Purl is pixel art made of table
+cells, drawn from the site's sprite data, so no inbox blocks it. Clients that force a light
+theme may invert colours; the content stays readable.
+
+| Email | Purl |
+|---|---|
+| Confirm sign up | winking, an ear flicked up, lime hearts |
+| Invite user | starry lime eyes, ears up, sparkles |
+| Magic link | eager, looking up, holding out a key |
+| Change email address | one brow raised at an envelope and a question mark |
+| Reset password | worried, a question mark and a dropped key |
+| Reauthentication | determined, ears up, guarding a lock |
