@@ -44,8 +44,12 @@ const wordmark = Fredoka({ subsets: ["latin"], weight: "600", display: "swap", v
 // Marks the document as script-enabled before first paint, so entrance animations can
 // pre-hide their items without ever hiding content from visitors without JavaScript.
 // Also shows the Purl preloader only once per browser session.
+// Before anything else runs, a sign-in code that landed on the wrong page is forwarded to
+// /auth/callback, the only page that redeems codes (see src/lib/supabase/auth.ts).
 const JS_FLAG =
-  "var d=document.documentElement;d.classList.add('js');try{if(sessionStorage.getItem('kl-pre'))d.classList.add('kl-pre-seen');else sessionStorage.setItem('kl-pre','1')}catch(e){}";
+  "var d=document.documentElement,l=location;d.classList.add('js');" +
+  "if(l.pathname!=='/auth/callback'&&l.pathname!=='/auth/callback/'&&/[?&#](code|error_description)=/.test(l.search+l.hash)){l.replace('/auth/callback'+l.search+l.hash)}" +
+  "try{if(sessionStorage.getItem('kl-pre'))d.classList.add('kl-pre-seen');else sessionStorage.setItem('kl-pre','1')}catch(e){}";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

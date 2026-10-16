@@ -14,14 +14,16 @@ export type SessionState = Session | null | "loading";
 /** Where a password-reset link must end up: the account page, with the new-password form open. */
 export const RESET_PASSWORD_PATH = "/account?reset=password";
 
-const CALLBACK_PATH = "/auth/callback";
+/**
+ * The only page that redeems a sign-in code. If Supabase lands a code anywhere else (it
+ * falls back to the Site URL when a redirect does not match the allow list), an inline
+ * script in the root layout forwards it here before any other script runs, so no other
+ * page can start redeeming it and be cut off mid-way.
+ */
+export const CALLBACK_PATH = "/auth/callback";
 
-/** True when the URL carries a sign-in code or an auth error from Supabase. */
-function isAuthRedirect(location: Location): boolean {
-  const query = new URLSearchParams(location.search);
-  const hash = new URLSearchParams(location.hash.slice(1));
-  return query.has("code") || query.has("error_description") || hash.has("error_description");
-}
+/** Where to go after the sign-in that is under way. Kept in the browser, not in the URL. */
+const NEXT_KEY = "kl-auth-next";
 
 let state: SessionState = isSupabaseConfigured ? "loading" : null;
 let started = false;
@@ -35,19 +37,10 @@ function set(next: SessionState) {
 function start() {
   if (started || !isSupabaseConfigured) return;
   started = true;
-  // Supabase falls back to the Site URL when a link's redirect is not on its allow list, so a
-  // sign-in code can land on any page. Hand it to the callback page, which finishes the
-  // sign-in or explains why it failed, instead of exchanging it silently wherever it landed.
-  if (window.location.pathname.replace(/\/$/, "") !== CALLBACK_PATH && isAuthRedirect(window.location)) {
-    window.location.replace(`${CALLBACK_PATH}${window.location.search}${window.location.hash}`);
-    return;
-  }
   const supabase = getSupabaseClient();
   supabase.auth.onAuthStateChange((event, session) => {
     set(session);
     // A password-reset link signs the visitor in, then they must choose a new password.
-    // Supabase sends them to the Site URL instead of our callback when the redirect URL is
-    // not on its allow list, so react to the event wherever it lands, not only on /auth/callback.
     if (event === "PASSWORD_RECOVERY" && window.location.pathname + window.location.search !== RESET_PASSWORD_PATH) {
       window.location.replace(RESET_PASSWORD_PATH);
     }
@@ -110,6 +103,33 @@ export function safeNextPath(value: string | null | undefined): string {
   return value;
 }
 
+/**
+ * The redirect address for a sign-in. It is always exactly `<origin>/auth/callback`, with no
+ * query string, so it matches the Supabase allow list (`https://kitloom.site/**`) every time.
+ * The page to return to is remembered in localStorage, which an emailed link opened in a new
+ * tab of the same browser can still read.
+ */
 export function callbackUrl(next: string): string {
-  return `${window.location.origin}${CALLBACK_PATH}?next=${encodeURIComponent(safeNextPath(next))}`;
+  try {
+    window.localStorage.setItem(NEXT_KEY, JSON.stringify({ next: safeNextPath(next), at: Date.now() }));
+  } catch {
+    // Storage blocked: the callback falls back to the account page.
+  }
+  return `${window.location.origin}${CALLBACK_PATH}`;
+}
+
+/** The page to return to after this sign-in (from the URL, else what callbackUrl stored). */
+export function takeNextPath(fromUrl: string | null): string {
+  if (fromUrl) return safeNextPath(fromUrl);
+  try {
+    // Read, not removed: React may call this twice. The next sign-in overwrites it, and an
+    // old entry expires below.
+    const raw = window.localStorage.getItem(NEXT_KEY);
+    const saved = raw ? (JSON.parse(raw) as { next?: string; at?: number }) : null;
+    // Only a recent sign-in counts: an old entry must not steer a later one.
+    if (saved?.next && typeof saved.at === "number" && Date.now() - saved.at < 60 * 60 * 1000) return safeNextPath(saved.next);
+  } catch {
+    // Unreadable: fall through.
+  }
+  return safeNextPath(null);
 }

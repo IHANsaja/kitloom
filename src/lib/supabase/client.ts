@@ -28,8 +28,11 @@ export function getSupabaseClient(): SupabaseClient {
     );
   }
   // PKCE keeps tokens out of the URL: the callback page receives a one-time code instead.
+  // The client never redeems a code on its own (detectSessionInUrl: false); only
+  // /auth/callback does, exactly once, so the sign-in cannot be started on one page and
+  // cut off by a navigation.
   client ??= createClient(url, publishableKey, {
-    auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+    auth: { flowType: "pkce", detectSessionInUrl: false, persistSession: true, autoRefreshToken: true },
   });
   return client;
 }
