@@ -170,6 +170,39 @@ for (const entry of kit.skills ?? []) {
   skillLines.push(`- \`${folder}\` — ${entry.why ?? meta.description.slice(0, 160)}`);
 }
 
+// ── Reference docs (third-party, copied with their licence) ─────────────────────────
+// Some skills cite a folder of reference notes outside their own directory (for example
+// `docs/wiki/`). It is copied to the same path, so the skills' references still resolve.
+
+const docLines = [];
+for (const entry of kit.docs ?? []) {
+  const [repo, dir] = String(entry.id ?? "").split("#");
+  const source = [...index.values()].find((skill) => skill.repo === repo);
+  if (!repo || !dir || !source) fail(`docs: unknown source ${entry.id}`);
+  if (!COPYABLE.has(source.license)) fail(`docs ${entry.id}: licence ${source.license} does not allow copying`);
+  const sources = (manifests.get(repo) ?? []).map((m) => m.path).filter((p) => p.startsWith(`${dir}/`)).slice(0, 40);
+  if (sources.length === 0) fail(`docs ${entry.id}: no files in the reviewed file list`);
+  for (const path of sources) {
+    const file = await raw(repo, source.commit, path);
+    if (!file) fail(`docs ${entry.id}: could not fetch ${path}`);
+    put(path, file.text ?? file.binary);
+  }
+  const licence = await licenceText(repo, source.commit);
+  if (!licence) fail(`docs ${entry.id}: no licence file found in ${repo}`);
+  put(`${dir}/LICENSE.txt`, licence);
+  put(
+    `${dir}/NOTICE.md`,
+    `# ${dir}
+
+These reference notes are copied from [${repo}](https://github.com/${repo}/tree/${source.commit}/${dir}) at commit \`${source.commit.slice(0, 12)}\`, under the ${source.license} licence (see LICENSE.txt in this folder). Kitloom made no changes to them.`,
+  );
+  credits.push({ folder: `${dir}/`, repo, commit: source.commit, license: source.license, stars: source.stars, dir });
+  docLines.push(`- \`${dir}/\` — ${entry.why ?? "reference notes the skills cite"}`);
+}
+
+// Helper scripts copied with the skills: they never run on their own, but the README says so.
+const hasScripts = [...files.keys()].some((path) => /\.(py|sh|js|mjs|cjs|ts|rb|ps1)$/.test(path) || /\/bin\//.test(path));
+
 // ── Instructions ───────────────────────────────────────────────────────────────────
 
 let instructions = read("AGENTS.md").trim();
@@ -253,7 +286,9 @@ put(
     "## Install",
     "",
     "1. Download this repository as a ZIP, or use the **Check and download** button on its Kitloom page, which checks it first.",
-    "2. Read the files. Nothing here runs on its own: the kit has no hooks and no install scripts.",
+    hasScripts
+      ? "2. Read the files. Nothing here runs on its own: the kit has no hooks. Some skills include helper scripts, which run only when you or your agent invoke them; read each one before you do."
+      : "2. Read the files. Nothing here runs on its own: the kit has no hooks and no install scripts.",
     "3. Copy the folders and files you want into the root of your project. `AGENTS.md` is the shared instructions file; edit it to fit your project.",
     "",
     "## What is inside",
@@ -262,6 +297,7 @@ put(
     "",
     ...skillLines,
     "",
+    ...(docLines.length ? ["### Reference docs", "", ...docLines, ""] : []),
     ...(commandLines.length ? ["### Commands", "", "Invoke by name (for example `/" + (kit.commands[0]?.name ?? "") + "`).", "", ...commandLines, ""] : []),
     ...(agentLines.length ? ["### Sub-agents", "", ...agentLines, ""] : []),
     ...(rules.length ? ["### Scoped rules", "", ...rules.map((r) => `- \`${r.name}\` — ${r.description}`), ""] : []),
@@ -283,9 +319,9 @@ put(
     "",
     "## Credits",
     "",
-    "The skills come from these open-source repositories, each under its own licence. Their licence and a notice are kept beside every copied skill.",
+    "The skills come from these open-source repositories, each under its own licence. Their licence and a notice are kept beside every copied skill and folder.",
     "",
-    "| Skill | Source | Licence |",
+    "| Skill or folder | Source | Licence |",
     "|---|---|---|",
     ...credits.map((c) => `| \`${c.folder}\` | [${c.repo}](https://github.com/${c.repo}) at \`${c.commit.slice(0, 7)}\` | ${c.license} |`),
     "",
@@ -305,7 +341,7 @@ put(
   [
     "# Third-party notices",
     "",
-    "This kit includes skills from the repositories below. Each is used under its licence; the full licence text is in `LICENSE.txt` inside the skill's folder.",
+    "This kit includes skills and reference notes from the repositories below. Each is used under its licence; the full licence text is in `LICENSE.txt` inside each copied folder.",
     "",
     ...credits.map((c) => `- **${c.folder}** — https://github.com/${c.repo}/tree/${c.commit}/${c.dir} (${c.license})`),
   ].join("\n"),
