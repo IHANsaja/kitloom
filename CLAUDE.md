@@ -116,13 +116,16 @@ src/lib/packages/                URL safety, path safety, download access, conte
 src/lib/scan/                    Heddle, the pre-download check: rules.ts, analyze.ts (pure), heddle.ts (fetching)
 src/components/scan/             The Heddle dialog, its report, and the StitchSampler animation
 src/components/pet/              Purl, the pixel-art lamb pet: sprites.ts (data), PurlSprite, PurlNook (behaviour)
+src/lib/pen/                     Purl's pen: world/A* pathing, pure needs simulation, wire protocol,
+                                 Canvas 2D isometric scene, and usePenRoom (Realtime presence + broadcast host)
+src/components/pen/              PenStage (canvas + controls) and PurlPen (the /purl page island)
 src/lib/supabase/                Browser client and session/auth helpers
 src/lib/site.ts                  Site-level config
 src/types/catalog.ts             Listing types
 docs/deployment.md               Cloudflare Pages + Supabase deployment steps
 ```
 
-Routes: `/` · `/explore` · `/agents` · `/setup?slug=` · `/publish` (`?edit=<slug>`) · `/signin` ·
+Routes: `/` · `/explore` · `/agents` · `/purl` · `/setup?slug=` · `/publish` (`?edit=<slug>`) · `/signin` ·
 `/auth/callback` · `/account` · `/about`.
 
 ## 6. Architectural boundaries
@@ -140,6 +143,9 @@ Routes: `/` · `/explore` · `/agents` · `/setup?slug=` · `/publish` (`?edit=<
 | Profiles | `src/lib/community/profiles.ts` | The only module that reads or updates the signed-in member's own profile. |
 | Package contents | `src/lib/packages/contents.ts` | Classifies file paths (skills, hooks, MCP config…) as a reading aid. Not a scanner. |
 | Pre-download check | `src/lib/scan/` (Heddle) | Runs in the browser when someone clicks download: pins the branch to a commit, reads the tree and every readable text file at that commit, and reports findings. The only code that decides what counts as a warning sign. |
+| Pen simulation | `src/lib/pen/simulation.ts`, `world.ts`, `path.ts` | Pure and testable: needs, activity choice, the isometric grid and A* walking. Only the host's copy is authoritative. |
+| Pen wire format | `src/lib/pen/protocol.ts` | Every presence and broadcast payload is rebuilt and range-limited here before it reaches the scene or the simulation. Nothing from the network is trusted. |
+| Pen room | `src/lib/pen/usePenRoom.ts` (with `net.ts`) | The only module that opens the `kitloom-pen` Realtime channel. Runs the host, adopts snapshots on handoff, sends visitor intentions, and disconnects cleanly. There are no pen tables or migrations. |
 
 UI components never query Supabase directly.
 
@@ -225,12 +231,18 @@ validation exists only to give good error messages.
 - **Content-Security-Policy.** `scripts/csp.mjs` runs after every build and adds a
   `<meta>` CSP to each exported page: scripts only from the site plus the SHA-256 of each
   page's own inline scripts (no `unsafe-inline`, no `unsafe-eval`), network calls only to
-  the site, the Supabase project, `api.github.com` and `raw.githubusercontent.com`, no
-  frames, no plugins.
+  the site, the Supabase project (https and wss, for Realtime), `api.github.com` and
+  `raw.githubusercontent.com`, no frames, no plugins.
   `public/_headers` adds `frame-ancestors 'none'`, HSTS and COOP. If you add a new
   external host (an image CDN, an API), add it in `buildPolicy` or it will be blocked in
   production. Development (`npm run dev`) does not apply the policy, so check new
   features with `npm run build && npm run preview`.
+- **The shared pen** (`/purl`) is public Realtime only: no rows, no storage, nothing is
+  persisted. Presence and broadcast payloads are untrusted input. The browser that hosts
+  the simulation decides distances and outcomes; everyone else sends intentions
+  (`pet`, `call`, `wave`, `feed`) that `protocol.ts` re-validates. A feed event carries a
+  published setup's slug, title and owner for display only — the icon is eaten, nothing is
+  fetched or downloaded.
 - Never show or imply a checksum, signature, or "verified" state for a download.
 - If ZIP uploads are ever added: reject path traversal and absolute paths, cap archive
   size / file count / compression ratio, never extract blindly, and do it on a backend.

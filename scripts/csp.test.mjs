@@ -23,10 +23,12 @@ describe("httpsOrigin", () => {
 });
 
 describe("buildPolicy", () => {
-  it("allows only the site, its hashes, Supabase and the GitHub API", () => {
+  it("allows only the site, its hashes, Supabase (HTTP and realtime) and the GitHub API", () => {
     const policy = buildPolicy({ scriptHashes: ["'sha256-x'"], supabaseOrigin: "https://abc.supabase.co", turnstile: false });
     expect(policy).toContain("script-src 'self' 'sha256-x';");
-    expect(policy).toContain("connect-src 'self' https://abc.supabase.co https://api.github.com https://raw.githubusercontent.com;");
+    expect(policy).toContain(
+      "connect-src 'self' https://abc.supabase.co wss://abc.supabase.co https://api.github.com https://raw.githubusercontent.com;",
+    );
     expect(policy).toContain("frame-src 'none';");
     expect(policy).toContain("object-src 'none'");
     expect(policy).not.toContain("unsafe-eval");

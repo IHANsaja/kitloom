@@ -398,6 +398,7 @@ tested), `PurlSprite.tsx` (renders a pose), `PurlNook.tsx` (behaviour).
 | About, under the "On this page" nav | `PurlNook` gap, knitting: a lime scarf grows with reading progress through `#about-content`; at the end Purl holds it up with hearts |
 | Publish, under the checklist | `PurlNook` gap |
 | Footer, bottom bar | `PurlNook` lane |
+| Purl's pen (`/purl`) | `PenStage`: the whole farm, drawn isometrically on a 720 × 460 canvas (island ground, barn, coop, pond, crops, fences, weather and an eight-minute day). Purl lives a needs-driven life in it — graze, nap, play, zoomies, stretch, nuzzle, bleat — while real visitors walk in, pet her, call her over, wave, and throw published kits (file icons) for her to eat. Everybody sees the same pen through Supabase Realtime; the earliest visitor's browser hosts Purl's brain. Controls are real buttons, so petting and feeding never depend on the canvas. Details below |
 | Agents, the ledger | `PurlPlaymate`: Purl sits on an agent's logo tile. Hover another row and it drops what it is doing and flies there in one hop, faster the further it goes, re-aimed mid-air if the cursor moves on (moves are interruptible: `actor.interruptWhen`). On each visit it plays: bounces on the tile (which squashes), spins it (lands dizzy), boops it (it wobbles) or hugs it (hearts, the logo turns lime). Wanders to other tiles on screen and naps on one when the cursor is still |
 | About header | `PurlWorkshop`, a pixel diorama of the whole idea: Purl fetches yarn from a basket, the lime shuttle weaves cloth on the loom row by row, the cloth becomes a kit, Purl files it on the shelf (the directory); three kits fill the shelf, then it clears (`lg` and up) |
 | Account header, beside the spool (`xl` and up) | `PurlYarnBall`: says hello with a hop, chases a lime yarn ball and nudges it along, naps when left alone, and cheers when the profile or password is saved (`cheerPurl()` in `pet/cheer.ts`) |
@@ -407,6 +408,26 @@ tested), `PurlSprite.tsx` (renders a pose), `PurlNook.tsx` (behaviour).
 Scripted scenes (Agents, About header, Account) use `usePurlActor`: an async script of `walkTo`, `hop`,
 `pose`, `wait` and `hearts`, which only runs while the stage is on screen and stops on
 unmount.
+
+**The shared pen (`/purl`).** This is a scene, not a decorative nook, so it gets its own rules:
+
+- The stage is a fixed 720 × 460 pixel canvas scaled with `image-rendering: pixelated`; tiles are
+  40 × 20. On `/purl` it spans the full width of the page frame, and the roster, needs, kit and
+  name panels sit in a row beneath it. On screens narrower than 680px the camera zooms to the
+  pen so Purl stays legible.
+- Purl's brain (`src/lib/pen/simulation.ts`) is a pure, testable needs system. Exactly one
+  visitor hosts it: presence decides by earliest join time, with the client id as a tie-break.
+  The host broadcasts a snapshot ten times a second; every visitor broadcasts their own
+  developer's frame. When the host leaves, the next visitor adopts the last snapshot.
+- Everything on the wire is untrusted and rebuilt by `src/lib/pen/protocol.ts` (ranges, enums,
+  length limits). Visitors only send intentions (`pet`, `call`, `wave`, `feed`); the host
+  decides distances and outcomes. There are no tables and no migrations: the pen is Realtime
+  broadcast and presence only.
+- The farm's illustration palette is separate from the UI tokens (see §2). Purl keeps the same
+  lime scarf and wool as everywhere else.
+- The canvas is `aria-hidden`; every action is a labelled button, the live status is a polite
+  live region, and reduced motion turns off weather, particles, camera bobbing and idle hops.
+  Kits are real published setups, but only the icon is eaten — nothing is downloaded.
 
 **Agent logos.** `src/components/ui/AgentLogo.tsx`: the vendors' single-colour ("mono") logos
 from [thesvg](https://thesvg.org) (`npx @thesvg/cli add <slug> --variant mono`), inlined and

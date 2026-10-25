@@ -73,6 +73,15 @@ The sign-in page shows only the methods that are enabled, with no code change ne
 OAuth client secrets are entered in the Supabase dashboard only. They never go in this
 repository or in Cloudflare.
 
+### Realtime (Purl's pen)
+
+`/purl` uses Supabase Realtime **broadcast and presence only** on the channel
+`kitloom-pen`. It has no tables, no migrations, and stores nothing: each visitor joins
+with presence, the earliest joiner hosts the simulation, and state travels as broadcast
+messages. There is nothing to configure beyond Realtime being available on the project
+(it is on by default), and no RLS policies are involved because no rows are read or
+written. The CSP allows both the `https://` and `wss://` forms of the Supabase origin.
+
 ### Moderation
 
 Community listings are public as soon as they are published. To take one down, open
@@ -156,18 +165,27 @@ Every push to `main` then redeploys production, and every pull request gets a pr
 
 On the `*.pages.dev` URL, check:
 
-- `/`, `/explore`, `/publish`, `/about` load.
+- `/`, `/explore`, `/purl`, `/publish`, `/about` load.
 - `/explore` lists the setups in the database, and opening one shows its README and files.
 - **Check and download** on a setup opens Heddle, which scans the latest commit (a few
   seconds) and then offers `<repo>-<commit>.zip` from github.com.
+- `/purl` shows the pen with Purl moving on her own, the clock and weather, and your name
+  in the roster. Open it in a second tab or another device: both visitors appear in the
+  roster, each developer walks where its own visitor clicks, and petting, calling or
+  throwing a kit from one tab is visible in the other. Close the tab that is hosting (the
+  roster marks it) and the pen keeps going in the remaining tab after it takes over.
 - `/does-not-exist` returns the Kitloom 404 page with status 404.
 - `/explore?agent=cursor` opens with the Cursor filter selected.
 - Response headers on any page include `Strict-Transport-Security`, `Cross-Origin-Opener-Policy`
   and `Content-Security-Policy: frame-ancestors 'none'…`, and the page source has a
-  `<meta http-equiv="Content-Security-Policy">` tag. The browser console shows no CSP errors.
+  `<meta http-equiv="Content-Security-Policy">` tag whose `connect-src` includes
+  `wss://xwoekncvlylaohjxrkgf.supabase.co`. The browser console shows no CSP errors and
+  `/purl` keeps its connection (no repeated "violates the Content Security Policy"
+  messages for websockets).
 - `/signin` shows the sign-in methods you enabled, and signing in lands on `/account`.
 - Publishing a test setup from `/publish` shows it at `/setup?slug=…` and in `/explore`,
-  and deleting it from `/account` removes it.
+  and deleting it from `/account` removes it. That setup then appears in `/purl`'s kit
+  list and can be thrown to Purl.
 
 ## 4. Connect kitloom.site
 
