@@ -1,18 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { COLS, composePose, EFFECTS, PIXEL_CLASS, ROWS, toRuns, type Ears, type Face, type Legs } from "@/components/pet/sprites";
+import { COLS, composePose, EAR_NAMES, EFFECTS, FACE_NAMES, LEG_NAMES, PIXEL_CLASS, ROWS, toRuns } from "@/components/pet/sprites";
 
-const FACES: Face[] = ["open", "lookLeft", "lookRight", "blink", "happy", "love", "scared", "squished", "sleep", "sad", "wink", "starry", "eager", "curious", "worried", "determined"];
-const EARS: Ears[] = ["down", "perk", "wiggle"];
-const LEGS: Legs[] = ["stand", "stepA", "stepB", "tuck", "splay", "none"];
 const KNOWN = new Set([".", ...Object.keys(PIXEL_CLASS)]);
 
 describe("Purl sprites", () => {
   it("composes every pose to a full grid of known pixels", () => {
     const problems: string[] = [];
-    for (const face of FACES)
-      for (const ears of EARS)
-        for (const legs of LEGS)
+    for (const face of FACE_NAMES)
+      for (const ears of EAR_NAMES)
+        for (const legs of LEG_NAMES)
           for (const puff of [false, true])
             for (const lying of [false, true]) {
               const rows = composePose({ face, ears, legs, puff, lying });
@@ -23,8 +20,8 @@ describe("Purl sprites", () => {
   });
 
   it("gives every expression its own face", () => {
-    const faces = FACES.map((face) => composePose({ face, ears: "down", legs: "stand", puff: false, lying: false }).join("\n"));
-    expect(new Set(faces).size).toBe(FACES.length);
+    const faces = FACE_NAMES.map((face) => composePose({ face, ears: "down", legs: "stand", puff: false, lying: false }).join("\n"));
+    expect(new Set(faces).size).toBe(FACE_NAMES.length);
   });
 
   it("keeps lime to the scarf and cheeks", () => {

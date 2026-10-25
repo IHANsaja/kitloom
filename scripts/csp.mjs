@@ -47,6 +47,8 @@ export function httpsOrigin(value) {
 }
 
 export function buildPolicy({ scriptHashes, supabaseOrigin, turnstile }) {
+  // Realtime uses a WebSocket, which CSP treats as a different scheme from https.
+  const supabaseSocket = supabaseOrigin ? supabaseOrigin.replace(/^https:/, "wss:") : null;
   const directives = [
     ["default-src", "'self'"],
     ["script-src", "'self'", ...scriptHashes, ...(turnstile ? [TURNSTILE_ORIGIN] : [])],
@@ -56,7 +58,14 @@ export function buildPolicy({ scriptHashes, supabaseOrigin, turnstile }) {
     // README images are never fetched; only the site's own images and data: icons load.
     ["img-src", "'self'", "data:"],
     ["font-src", "'self'"],
-    ["connect-src", "'self'", ...(supabaseOrigin ? [supabaseOrigin] : []), GITHUB_API_ORIGIN, GITHUB_RAW_ORIGIN],
+    [
+      "connect-src",
+      "'self'",
+      ...(supabaseOrigin ? [supabaseOrigin] : []),
+      ...(supabaseSocket ? [supabaseSocket] : []),
+      GITHUB_API_ORIGIN,
+      GITHUB_RAW_ORIGIN,
+    ],
     ["frame-src", ...(turnstile ? [TURNSTILE_ORIGIN] : ["'none'"])],
     ["worker-src", "'self'"],
     ["object-src", "'none'"],

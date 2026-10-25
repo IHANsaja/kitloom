@@ -9,6 +9,7 @@ import { PurlNook } from "@/components/pet/PurlNook";
 const LINKS = [
   { href: "/explore", label: "Explore" },
   { href: "/agents", label: "Agents" },
+  { href: "/purl", label: "Purl’s pen" },
   { href: "/publish", label: "Publish" },
   { href: "/about", label: "About" },
   { href: "/about#security", label: "Security" },

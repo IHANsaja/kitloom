@@ -45,7 +45,8 @@ export type Face =
   | "eager"
   | "curious"
   | "worried"
-  | "determined";
+  | "determined"
+  | "graze";
 export type Ears = "down" | "perk" | "wiggle";
 export type Legs = "stand" | "stepA" | "stepB" | "tuck" | "splay" | "none";
 
@@ -123,7 +124,13 @@ const FACES: Record<Face, Patch[]> = {
   worried: [[8, 3, "E"], [9, 4, "E"], [12, 3, "E"], [11, 4, "E"], [7, 5, "E"], [8, 5, "E"], [7, 6, "E"], [8, 6, "h"], [12, 5, "E"], [13, 5, "E"], [12, 6, "E"], [13, 6, "h"], [9, 8, "E"], [10, 7, "E"], [11, 8, "E"]],
   // Brows down, eyes narrowed, mouth set: on guard
   determined: [[7, 4, "E"], [8, 5, "E"], [13, 4, "E"], [12, 5, "E"], [7, 6, "E"], [8, 6, "E"], [12, 6, "E"], [13, 6, "E"], [9, 8, "E"], [10, 8, "E"], [11, 8, "E"]],
+  // Eyes lowered to the grass, one mouthful of clover: grazing, head down
+  graze: [[7, 7, "E"], [8, 7, "E"], [12, 7, "E"], [13, 7, "E"], ...CHEEKS, [10, 8, "E"]],
 };
+
+export const FACE_NAMES = Object.keys(FACES) as Face[];
+export const EAR_NAMES: Ears[] = ["down", "perk", "wiggle"];
+export const LEG_NAMES: Legs[] = ["stand", "stepA", "stepB", "tuck", "splay", "none"];
 
 const EAR_PIXELS: Patch[] = [
   [2, 3, "."], [3, 3, "."], [2, 4, "."], [3, 4, "."],
@@ -226,6 +233,8 @@ export const EFFECTS = {
   z: ["WWW", "..W", ".W.", "WWW"],
   bang: ["W", "W", "W", ".", "W"],
   drop: [".w.", "www", ".w."],
+  // A small bleat: a quaver note
+  note: ["..SS", "..S.", "..S.", "SSS.", "SS.."],
   // Two knitting needles crossed over a lime stitch
   needles: ["w.......w", ".w.....w.", "..w...w..", "...wSw...", "....S...."],
   // A ball of lime yarn with a loose end
